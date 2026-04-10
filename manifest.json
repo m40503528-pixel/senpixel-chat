@@ -1,9 +1,9 @@
-\{
-  "name": "Senpixel Messenger Pro",
+{
+  "name": "Senpixel Messenger",
   "short_name": "Senpixel",
-  "start_url": "index.html",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#080a0c",
+  "background_color": "#0b0e11",
   "theme_color": "#ff3333",
   "icons": [
     {
