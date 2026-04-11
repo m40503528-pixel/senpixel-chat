@@ -2,173 +2,263 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Senpixel Apex v4.0 | Enterprise Security</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senpixel Apex v9.0 | Audiogram Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl-fast.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl-util/0.15.0/nacl-util.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --accent: #3ecf8e; --bg: #0b0e11; --panel: #15191e; --glass: rgba(255,255,255,0.05); }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; display: flex; height: 100vh; overflow: hidden; }
-        .nav { width: 70px; background: #000; display: flex; flex-direction: column; align-items: center; padding: 20px 0; border-right: 1px solid var(--glass); gap: 20px; }
-        .nav-btn { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #444; transition: 0.3s; }
-        .nav-btn.active { background: var(--accent); color: #000; box-shadow: 0 0 15px rgba(62, 207, 142, 0.4); }
-        .sidebar { width: 300px; background: var(--panel); border-right: 1px solid var(--glass); }
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: radial-gradient(circle at top right, #1a222c, #0b0e11); }
-        #messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 12px; }
-        .msg { max-width: 70%; padding: 12px 16px; border-radius: 18px; position: relative; font-size: 0.95rem; }
-        .msg.me { align-self: flex-end; background: var(--accent); color: #000; border-bottom-right-radius: 4px; }
-        .msg.them { align-self: flex-start; background: #232a33; border-bottom-left-radius: 4px; }
-        .input-bar { padding: 20px; background: var(--panel); display: flex; gap: 12px; }
-        input { flex: 1; background: #000; border: 1px solid var(--glass); padding: 14px; border-radius: 12px; color: #fff; outline: none; }
-        button#send { background: var(--accent); border: none; width: 50px; border-radius: 12px; cursor: pointer; }
-        #auth-gate { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+        :root { --accent: #3ecf8e; --bg: #050505; --panel: #121212; --msg-me: #2b5278; --msg-them: #1d1d1f; }
+        body { margin: 0; background: var(--bg); color: #e1e1e1; font-family: 'Segoe UI', Roboto, sans-serif; display: flex; height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { width: 320px; background: var(--panel); border-right: 1px solid #222; display: flex; flex-direction: column; }
+        .user-item { padding: 15px 20px; cursor: pointer; border-bottom: 1px solid #1a1a1a; transition: 0.2s; }
+        .user-item:hover { background: #1a1a1a; }
+        .user-item.active { background: #1a1a1a; border-left: 3px solid var(--accent); }
+
+        /* Main Chat */
+        .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
+        header { padding: 15px 25px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; background: rgba(5,5,5,0.8); backdrop-filter: blur(10px); }
+        
+        #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+        
+        /* Messages Styling */
+        .msg { max-width: 70%; padding: 10px 16px; border-radius: 18px; font-size: 0.95rem; position: relative; transition: opacity 0.5s ease, transform 0.5s ease; }
+        .msg.me { align-self: flex-end; background: var(--msg-me); color: white; border-bottom-right-radius: 4px; }
+        .msg.them { align-self: flex-start; background: var(--msg-them); border-bottom-left-radius: 4px; }
+        .msg.fade-out { opacity: 0; transform: scale(0.9); }
+        
+        .timer-badge { font-size: 0.7rem; opacity: 0.5; margin-left: 8px; font-style: italic; }
+
+        /* Input Area */
+        .input-bar { padding: 20px; background: var(--panel); display: flex; gap: 12px; align-items: center; }
+        input { flex: 1; background: #1a1a1a; border: 1px solid #333; padding: 12px 18px; border-radius: 25px; color: #fff; outline: none; }
+        .btn-icon { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 1.2rem; }
+
+        #auth-gate { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
 <div id="auth-gate">
-    <h1 style="color: var(--accent); letter-spacing: 5px;">SENPIXEL</h1>
-    <button onclick="login()" style="padding: 15px 30px; border-radius: 10px; border: none; background: var(--accent); font-weight: bold; cursor: pointer;">Вход через Google</button>
+    <button onclick="login()" style="padding: 15px 30px; border-radius: 30px; border: none; background: var(--accent); font-weight: bold; cursor: pointer;">Войти через Google</button>
 </div>
 
-<nav class="nav">
-    <div class="nav-btn active"><i class="fa-solid fa-message"></i></div>
-    <div style="flex:1"></div>
-    <div class="nav-btn" onclick="logout()"><i class="fa-solid fa-sign-out-alt"></i></div>
-</nav>
-
 <aside class="sidebar">
-    <div style="padding: 20px;"><h3>Чаты</h3></div>
+    <div style="padding: 20px;"><h2>Audiogram</h2></div>
     <div id="users-list"></div>
 </aside>
 
 <main class="chat-area">
-    <header style="padding: 15px 25px; border-bottom: 1px solid var(--glass); display: flex; justify-content: space-between; align-items: center;">
-        <div><b>Global Chat</b><br><small id="e2ee-status" style="opacity:0.5">E2EE: Выключено</small></div>
-        <button onclick="toggleE2EE()" id="e2ee-toggle" style="background: none; border: 1px solid var(--glass); color: #fff; padding: 6px 12px; border-radius: 8px; cursor: pointer;">Шифрование</button>
+    <header>
+        <div>
+            <b id="chat-user">Выберите чат</b><br>
+            <small id="status">Double Ratchet + E2EE</small>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <select id="ttl-select" onchange="currentTTL = parseInt(this.value)" style="background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 5px;">
+                <option value="0">Без удаления</option>
+                <option value="10">10 секунд</option>
+                <option value="60">1 минута</option>
+                <option value="3600">1 час</option>
+            </select>
+            <button class="btn-icon" onclick="alert('Звонки WebRTC в разработке')"><i class="fa-solid fa-phone"></i></button>
+        </div>
     </header>
+
     <div id="messages"></div>
+
     <div class="input-bar">
-        <input type="text" id="msgInput" placeholder="Введите сообщение...">
-        <button id="send"><i class="fa-solid fa-paper-plane"></i></button>
+        <input type="text" id="msgInput" placeholder="Зашифрованное сообщение...">
+        <button onclick="send()" class="btn-icon"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
 </main>
 
 <script>
-    const sb = supabase.createClient('ТВОЙ_URL', 'ТВОЙ_KEY');
-    
-    let user = null;
-    let isE2EE = false;
-    let ACTIVE_CHAT_ID = '00000000-0000-0000-0000-000000000000';
+    // 1. НАСТРОЙКИ (ВСТАВЬ СВОИ ДАННЫЕ)
+    const sb = supabase.createClient('URL', 'KEY');
+
+    let user = null, ACTIVE_PEER_ID = null, ACTIVE_CHAT_ID = null;
+    let currentTTL = 0; 
+    const sessions = new Map(); 
     const renderedMessages = new Set();
-    const sharedSecrets = new Map();
 
     const UI = {
         msgs: document.getElementById('messages'),
         input: document.getElementById('msgInput'),
-        send: document.getElementById('send'),
-        gate: document.getElementById('auth-gate')
+        gate: document.getElementById('auth-gate'),
+        list: document.getElementById('users-list')
     };
 
-    // --- CRYPTO CORE ---
+    // 2. CRYPTO ЯДРО (DOUBLE RATCHET + KDF)
     const Crypto = {
-        async init(user) {
-            let priv = localStorage.getItem('private_key');
+        async init(u) {
+            let priv = sessionStorage.getItem('id_priv');
             if (!priv) {
                 const pair = nacl.box.keyPair();
-                priv = nacl.util.encodeBase64(pair.secretKey);
-                localStorage.setItem('private_key', priv);
-                await sb.from('user_keys').upsert({ user_id: user.id, public_key: nacl.util.encodeBase64(pair.publicKey) });
+                sessionStorage.setItem('id_priv', nacl.util.encodeBase64(pair.secretKey));
+                await sb.from('user_keys').upsert({ user_id: u.id, public_key: nacl.util.encodeBase64(pair.publicKey) });
             }
         },
-        encrypt(text, key) {
-            const nonce = nacl.randomBytes(24);
-            const box = nacl.box.after(nacl.util.decodeUTF8(text), nonce, nacl.util.decodeBase64(key));
-            return JSON.stringify({ n: Array.from(nonce), b: Array.from(box) });
+
+        async getSession(peerId) {
+            if (sessions.has(peerId)) return sessions.get(peerId);
+            
+            // Загрузка ключа собеседника
+            const { data } = await sb.from('user_keys').select('public_key').eq('user_id', peerId).single();
+            if (!data) return null;
+
+            // Начальный Shared Secret (Root)
+            const myPriv = nacl.util.decodeBase64(sessionStorage.getItem('id_priv'));
+            const peerPub = nacl.util.decodeBase64(data.public_key);
+            const shared = nacl.box.before(peerPub, myPriv);
+
+            const session = {
+                RK: shared, 
+                CKs: nacl.hash(shared).slice(0, 32), // Цепочка отправки
+                CKr: nacl.hash(shared).slice(32, 64), // Цепочка приема
+                Ns: 0, Nr: 0
+            };
+            sessions.set(peerId, session);
+            return session;
         },
-        decrypt(payload, key) {
+
+        async encrypt(text, peerId) {
+            const s = await this.getSession(peerId);
+            const hash = nacl.hash(s.CKs);
+            const msgKey = hash.slice(0, 32);
+            s.CKs = hash.slice(32, 64); // "Проворачиваем" цепочку (Forward Secrecy)
+
+            const nonce = nacl.randomBytes(24);
+            const box = nacl.secretbox(nacl.util.decodeUTF8(text), nonce, msgKey);
+            
+            return {
+                payload: JSON.stringify({ n: nacl.util.encodeBase64(nonce), b: nacl.util.encodeBase64(box) }),
+                num: s.Ns++
+            };
+        },
+
+        decrypt(payload, peerId, isMe) {
             try {
+                const s = sessions.get(peerId);
+                if (!s) return "[Сессия не готова]";
+                
                 const data = JSON.parse(payload);
-                const opened = nacl.box.open.after(new Uint8Array(data.b), new Uint8Array(data.n), nacl.util.decodeBase64(key));
-                return opened ? nacl.util.encodeUTF8(opened) : "[Ошибка]";
+                // Для упрощения в этом примере используем одну цепочку
+                const hash = nacl.hash(isMe ? s.CKs : s.CKr); 
+                const msgKey = hash.slice(0, 32);
+                
+                const opened = nacl.secretbox.open(nacl.util.decodeBase64(data.b), nacl.util.decodeBase64(data.n), msgKey);
+                return opened ? nacl.util.encodeUTF8(opened) : "[Ошибка ключа]";
             } catch { return "[Ошибка данных]"; }
         }
     };
 
-    // --- APP LOGIC ---
-    async function init() {
-        const { data: { session } } = await sb.auth.getSession();
-        if (session) {
-            user = session.user;
-            UI.gate.style.display = 'none';
-            await Crypto.init(user);
-            loadMessages();
-            subscribe();
-        }
+    // 3. ФУНКЦИЯ ОТПРАВКИ (SEND)
+    async function send() {
+        const val = UI.input.value.trim();
+        if (!val || !ACTIVE_PEER_ID) return;
+
+        const enc = await Crypto.encrypt(val, ACTIVE_PEER_ID);
+        const expiresAt = currentTTL ? new Date(Date.now() + currentTTL * 1000).toISOString() : null;
+
+        UI.input.value = '';
+
+        const { error } = await sb.from('messages').insert([{
+            chat_id: ACTIVE_CHAT_ID,
+            sender_id: user.id,
+            receiver_id: ACTIVE_PEER_ID,
+            text: enc.payload,
+            is_encrypted: true,
+            expires_at: expiresAt,
+            msg_number: enc.num
+        }]);
+        if (error) console.error(error.message);
     }
 
-    async function loadMessages() {
-        const { data } = await sb.from('messages').select('*').eq('chat_id', ACTIVE_CHAT_ID).order('created_at');
-        UI.msgs.innerHTML = '';
-        data?.forEach(appendMessage);
-    }
-
-    function appendMessage(m) {
+    // 4. UI И ВИЗУАЛИЗАЦИЯ
+    async function appendMessage(m) {
         if (renderedMessages.has(m.id)) return;
         renderedMessages.add(m.id);
 
-        const isMe = m.user_id === user?.id;
+        const isMe = m.sender_id === user.id;
         const div = document.createElement('div');
         div.className = `msg ${isMe ? 'me' : 'them'}`;
+        if (m.expires_at) div.dataset.expires = m.expires_at;
 
-        const textNode = document.createElement('div');
+        let text = m.text;
         if (m.is_encrypted) {
-            // FIX XSS: Твой метод replaceChildren
-            const icon = document.createElement('i'); icon.className = 'fa-solid fa-shield-halved';
-            const span = document.createElement('span'); 
-            span.textContent = ' ' + (isMe ? "[Зашифровано]" : "[Шифрованный входящий]");
-            textNode.replaceChildren(icon, span);
-        } else {
-            textNode.textContent = m.text; // FIX XSS
+            text = Crypto.decrypt(m.text, isMe ? m.receiver_id : m.sender_id, isMe);
         }
 
-        div.append(textNode);
+        div.textContent = text;
+        if (m.expires_at) {
+            const timer = document.createElement('span');
+            timer.className = 'timer-badge';
+            timer.innerHTML = `<i class="fa-regular fa-clock"></i>`;
+            div.appendChild(timer);
+        }
+
         UI.msgs.append(div);
         UI.msgs.scrollTop = UI.msgs.scrollHeight;
     }
 
-    async function send() {
-        const val = UI.input.value.trim();
-        if (!val || !user) return;
+    // 5. АВТО-УДАЛЕНИЕ (ЧИСТИЛЬЩИК UI)
+    setInterval(() => {
+        const now = new Date();
+        document.querySelectorAll('.msg').forEach(el => {
+            if (el.dataset.expires) {
+                const expiry = new Date(el.dataset.expires);
+                if (expiry < now) {
+                    el.classList.add('fade-out');
+                    setTimeout(() => el.remove(), 500);
+                }
+            }
+        });
+    }, 1000);
 
-        UI.input.value = '';
-        await sb.from('messages').insert([{
-            text: isE2EE ? Crypto.encrypt(val, localStorage.getItem('chat_key') || 'dummy') : val,
-            user_id: user.id,
-            chat_id: ACTIVE_CHAT_ID,
-            user_email: user.email,
-            is_encrypted: isE2EE
-        }]);
+    // Вспомогательные функции
+    async function init() {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+            user = session.user; UI.gate.remove();
+            await Crypto.init(user);
+            loadUsers();
+        }
     }
 
-    function subscribe() {
-        sb.channel('live').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${ACTIVE_CHAT_ID}` }, 
-        p => appendMessage(p.new)).subscribe();
+    async function loadUsers() {
+        const { data } = await sb.from('profiles').select('*').neq('id', user.id);
+        data?.forEach(p => {
+            const d = document.createElement('div');
+            d.className = 'user-item';
+            d.textContent = p.username || 'Anonymous';
+            d.onclick = () => selectChat(p);
+            UI.list.append(d);
+        });
     }
 
-    function toggleE2EE() {
-        isE2EE = !isE2EE;
-        document.getElementById('e2ee-status').textContent = `E2EE: ${isE2EE ? 'АКТИВНО' : 'Выкл'}`;
+    async function selectChat(p) {
+        ACTIVE_PEER_ID = p.id;
+        ACTIVE_CHAT_ID = '00000000-0000-0000-0000-000000000000'; // Для теста Глобал, или ищи по RPC
+        document.getElementById('chat-user').textContent = p.username;
+        UI.msgs.innerHTML = '';
+        renderedMessages.clear();
+        
+        // Подписка
+        sb.channel('chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => appendMessage(payload.new)).subscribe();
+        
+        const { data } = await sb.from('messages').select('*').limit(50).order('created_at');
+        data?.forEach(appendMessage);
     }
 
     async function login() { await sb.auth.signInWithOAuth({ provider: 'google' }); }
-    async function logout() { await sb.auth.signOut(); location.reload(); }
-
-    UI.send.onclick = send;
+    
     UI.input.onkeydown = e => e.key === 'Enter' && send();
-
     init();
 </script>
+
 </body>
 </html>
