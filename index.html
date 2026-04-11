@@ -2,112 +2,16 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self'; 
-        script-src 'self' blob:; 
-        worker-src 'self' blob:; 
-        connect-src 'self' https://*.supabase.co;
-        style-src 'unsafe-inline';
-        object-src 'none';
-        base-uri 'none';
-        require-trusted-types-for 'script';
-    ">
-    <title>senpixel v3.5.0 // TITAN EVENT HORIZON</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TITAN v3.5.1 // SENTINEL DRIVE</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob:; worker-src 'self' blob:; connect-src 'self' https://*.supabase.co; style-src 'self' 'unsafe-inline';">
+    <style>
+        body { background: #000; color: #00ffa2; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        #titan-mount { width: 90%; max-width: 500px; }
+    </style>
 </head>
 <body>
-
-<div id="titan-black-site"></div>
-
-<script id="titan-kernel" type="application/javascript-worker">
-    importScripts('https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js');
-
-    let KERNEL_STATE = {
-        sessions: new Map(),
-        intentRegistry: new Set(),
-        wasmMemory: null // Симуляция изолированной памяти
-    };
-
-    const WIPE = (obj) => {
-        if (obj instanceof Uint8Array) obj.fill(0);
-        for (let k in obj) obj[k] = null;
-    };
-
-    self.onmessage = async (e) => {
-        const { type, payload, intent } = e.data;
-
-        // --- ГВАРДИЯ НАМЕРЕНИЙ (Intent Guard) ---
-        if (type === 'SECURE_TRANSFER') {
-            if (!verifyWebAuthn(intent)) throw new Error("HARDWARE_INTENT_REQUIRED");
-            if (KERNEL_STATE.intentRegistry.has(intent.id)) throw new Error("REPLAY_ATTACK");
-            
-            const session = KERNEL_STATE.sessions.get(payload.peerId);
-            const cipher = await encryptInWasmEnclave(session, payload.text);
-            
-            KERNEL_STATE.intentRegistry.add(intent.id);
-            self.postMessage({ type: 'DISPATCH_READY', cipher });
-        }
-
-        if (type === 'WIPE_AND_HALT') {
-            KERNEL_STATE.sessions.forEach(s => WIPE(s));
-            KERNEL_STATE.sessions.clear();
-            self.postMessage({ type: 'HALTED' });
-        }
-    };
-
-    function verifyWebAuthn(intent) {
-        // Здесь происходит проверка подписи аппаратного ключа
-        return !!(intent && intent.signature);
-    }
-
-    async function encryptInWasmEnclave(session, text) {
-        // Симуляция работы WASM-ядра
-        // 
-        return { ct: "sealed_v35:" + btoa(text), ts: Date.now() };
-    }
-</script>
-
-<script>
-    // --- 🛡️ UI BLACK-BOX ---
-    class TitanTerminal extends HTMLElement {
-        constructor() {
-            super();
-            const root = this.attachShadow({ mode: 'closed' });
-            root.innerHTML = `
-                <div style="background:#000;color:#0f0;padding:20px;border:1px solid #333;">
-                    <div id="logs">SYSTEM_READY</div>
-                    <input type="text" id="i" style="background:#111;color:#0f0;border:1px solid #0f0;width:80%;">
-                    <button id="b">SEND</button>
-                </div>
-            `;
-
-            root.querySelector('#b').addEventListener('click', async (e) => {
-                if (!e.isTrusted) return; // Блокировка программных атак
-                const text = root.querySelector('#i').value;
-                root.querySelector('#i').value = '';
-                
-                // 1. Создаем криптографическое намерение (Hardware Assertion)
-                const intent = await createHardwareIntent();
-                
-                // 2. Отправляем в Kernel
-                titanKernel.postMessage({
-                    type: 'SECURE_TRANSFER',
-                    payload: { text, peerId: 'u-final' },
-                    intent
-                });
-            });
-        }
-
-        async createHardwareIntent() {
-            // В продакшене: navigator.credentials.get({...})
-            return { id: crypto.randomUUID(), signature: 'HARDWARE_SIGNED_TOKEN' };
-        }
-    }
-
-    customElements.define('titan-terminal', TitanTerminal);
-    document.getElementById('titan-black-site').appendChild(new TitanTerminal());
-
-    const blob = new Blob([document.getElementById('titan-kernel').textContent], { type: 'application/javascript' });
-    const titanKernel = new Worker(URL.createObjectURL(blob));
-</script>
+    <div id="titan-mount"></div>
+    <script src="app.js"></script>
 </body>
 </html>
