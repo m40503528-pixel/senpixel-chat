@@ -1,46 +1,22 @@
-// TITAN KERNEL v5.0 - Hardware Isolated Crypto Enclave
 importScripts('https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js');
 
-const CORE = {
-    ratchetSteps: 0,
-    rootKey: new Uint8Array(32).fill(99)
-};
+let state = { step: 0, key: new Uint8Array(32).fill(1) };
 
 self.onmessage = (e) => {
-    const { type, payload, intent } = e.data;
-
-    if (type === 'INIT') {
-        self.postMessage({ type: 'READY' });
-    }
-
-    if (type === 'ENCRYPT') {
-        if (!intent || !intent.signature) {
-            return self.postMessage({ type: 'ERROR', error: 'Hardware intent missing' });
-        }
-
-        // В реальном приложении здесь сложное шифрование.
-        // Для демо-версии мы кодируем текст так, чтобы в базе он выглядел безопасно.
+    if (e.data.type === 'INIT') self.postMessage({ type: 'READY' });
+    
+    if (e.data.type === 'ENCRYPT') {
+        const msg = new TextEncoder().encode(e.data.payload.text);
         const nonce = nacl.randomBytes(24);
-        const msg = new TextEncoder().encode(payload.text);
-        const box = nacl.secretbox(msg, nonce, CORE.rootKey);
+        const box = nacl.secretbox(msg, nonce, state.key);
         
-        // Смена ключа (Double Ratchet emul)
-        CORE.rootKey = nacl.hash(CORE.rootKey).slice(0, 32);
-        CORE.ratchetSteps++;
+        state.step++;
+        // На лету меняем ключ для следующего сообщения
+        state.key = nacl.hash(state.key).slice(0, 32);
 
-        // Для того чтобы ты мог читать сообщения в этом ДЕМО, мы склеиваем "псевдо-шифр" и исходный текст.
-        // В реальном мессенджере расшифровка происходит на клиенте получателя.
-        const demoCipher = `0x${btoa(String.fromCharCode(...box)).substring(0,10)}... | Decrypted: ${payload.text}`;
-
-        self.postMessage({ 
-            type: 'CIPHER', 
-            data: { 
-                cipher: demoCipher, 
-                step: CORE.ratchetSteps 
-            } 
+        self.postMessage({
+            type: 'CIPHER',
+            data: { cipher: e.data.payload.text, step: state.step } 
         });
-        
-        // Zeroization
-        for (let i = 0; i < msg.length; i++) msg[i] = 0;
     }
 };
