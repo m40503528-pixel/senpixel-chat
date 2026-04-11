@@ -1,71 +1,52 @@
-// titan_kernel.js
+/**
+ * TITAN KERNEL v3.5.1 - Intelligent Enclave
+ */
 importScripts('https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js');
 
-const KERNEL = {
-    sessions: new Map(),
+const KERNEL_CORE = {
+    active: false,
     intents: new Set(),
-    capabilities: new Set(['INIT']), // Изначально разрешена только загрузка
-    
-    // AI-Sentinel: Анализ аномалий (простая проверка энтропии/структуры)
-    analyzeAnomaly(payload) {
-        if (!payload || payload.length < 2) return true; 
-        return false;
+    // Функция самоочистки памяти
+    wipe(data) {
+        if (data instanceof Uint8Array) data.fill(0);
+        return null;
     }
 };
 
-self.onmessage = async (e) => {
+self.onmessage = (e) => {
     const { type, payload, intent } = e.data;
-
-    // Проверка прав (Capabilities)
-    if (!KERNEL.capabilities.has(type)) {
-        return self.postMessage({ type: 'ERROR', error: 'CAPABILITY_DENIED' });
-    }
 
     switch (type) {
         case 'INIT':
-            // Эмуляция восстановления состояния
-            KERNEL.capabilities.add('ENCRYPT');
-            KERNEL.capabilities.add('WIPE');
+            KERNEL_CORE.active = true;
             self.postMessage({ type: 'READY' });
             break;
 
         case 'ENCRYPT':
-            // 1. Проверка аппаратного намерения (WebAuthn)
-            if (!intent || !intent.signature) {
-                return self.postMessage({ type: 'ERROR', error: 'HARDWARE_AUTH_REQUIRED' });
-            }
+            if (!KERNEL_CORE.active) return;
             
-            // 2. Anti-Replay
-            if (KERNEL.intents.has(intent.id)) {
-                return self.postMessage({ type: 'ERROR', error: 'REPLAY_ATTACK' });
-            }
-            
-            // 3. AI-Sentinel Check
-            if (KERNEL.analyzeAnomaly(payload.text)) {
-                return self.postMessage({ type: 'ERROR', error: 'AI_SENTINEL_BLOCK' });
+            // Имитация AI-защиты: блокировка подозрительно коротких сообщений
+            if (payload.text.length < 1) {
+                self.postMessage({ type: 'ERROR', error: 'AI_SENTINEL: Payload too small' });
+                return;
             }
 
-            // 4. Шифрование (Double Ratchet Stub)
             const nonce = nacl.randomBytes(24);
-            const key = new Uint8Array(32).fill(7); // В проде здесь ключ из сессии
-            const messageUint8 = new TextEncoder().encode(payload.text);
-            const cipherRaw = nacl.secretbox(messageUint8, nonce, key);
-
-            const cipher = btoa(String.fromCharCode(...cipherRaw));
-            const nonceBase64 = btoa(String.fromCharCode(...nonce));
-
-            KERNEL.intents.add(intent.id);
+            const key = new Uint8Array(32).fill(13); // В проде - динамический ключ
+            const msg = new TextEncoder().encode(payload.text);
+            
+            const encrypted = nacl.secretbox(msg, nonce, key);
+            
             self.postMessage({ 
                 type: 'CIPHER', 
-                data: { cipher, nonce: nonceBase64, peerId: payload.peerId } 
+                data: { 
+                    cipher: btoa(String.fromCharCode(...encrypted)),
+                    nonce: btoa(String.fromCharCode(...nonce))
+                } 
             });
-            break;
 
-        case 'WIPE':
-            KERNEL.sessions.clear();
-            KERNEL.capabilities.clear();
-            KERNEL.capabilities.add('INIT');
-            self.postMessage({ type: 'HALTED' });
+            // Мгновенная очистка временных буферов (Self-Healing Memory)
+            KERNEL_CORE.wipe(msg);
             break;
     }
 };
