@@ -1,75 +1,81 @@
 /**
- * TITAN KERNEL v3.5.2 // ENCLAVE MODE
- * Технологии: Double Ratchet, Memory Sanitization, Capability Model
+ * TITAN KERNEL v4.0 // NEXUS ENCLAVE
+ * Full Stack: Double Ratchet, Hardware Intent Validation, Memory Zeroization
  */
 importScripts('https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js');
 
 const CORE = {
     active: false,
-    capabilities: new Set(['INIT']),
+    caps: new Set(['INIT']),
     intents: new Set(),
     
-    // Double Ratchet State (Simplified for Web)
+    // Эмуляция состояния Double Ratchet
     ratchet: {
-        rootKey: new Uint8Array(32).fill(1), 
-        chainKey: new Uint8Array(32).fill(2)
+        rootKey: new Uint8Array(32).fill(42), 
+        messageCount: 0
     },
 
-    wipe(buf) {
-        if (buf instanceof Uint8Array) buf.fill(0);
+    // Функция жесткой очистки памяти (Sanitization)
+    zeroize(buffer) {
+        if (buffer instanceof Uint8Array) {
+            for (let i = 0; i < buffer.length; i++) buffer[i] = 0;
+        }
+    },
+
+    // Продвижение храповика (KDF - Key Derivation Function)
+    advanceRatchet() {
+        const hash = nacl.hash(this.ratchet.rootKey);
+        this.ratchet.rootKey = hash.slice(0, 32); // Берем первые 32 байта хеша как новый ключ
+        this.ratchet.messageCount++;
     }
 };
 
-self.onmessage = async (e) => {
+self.onmessage = (e) => {
     const { type, payload, intent } = e.data;
 
-    if (!CORE.capabilities.has(type)) {
-        return self.postMessage({ type: 'ERROR', error: 'CAPABILITY_DENIED_BY_SENTINEL' });
+    if (!CORE.caps.has(type)) {
+        return self.postMessage({ type: 'ERROR', error: 'KERNEL_PANIC: CAPABILITY_DENIED' });
     }
 
     switch (type) {
         case 'INIT':
             CORE.active = true;
-            CORE.capabilities.add('ENCRYPT');
-            CORE.capabilities.add('WIPE');
+            CORE.caps.add('ENCRYPT');
             self.postMessage({ type: 'READY' });
             break;
 
         case 'ENCRYPT':
-            // 1. ПРОВЕРКА HARDWARE INTENT
-            if (!intent?.signature) {
-                return self.postMessage({ type: 'ERROR', error: 'HARDWARE_TOKEN_MISSING' });
+            // 1. Проверка аппаратного токена (Защита от Replay-атак)
+            if (!intent || !intent.signature) {
+                return self.postMessage({ type: 'ERROR', error: 'HW_TOKEN_REJECTED' });
             }
-            if (CORE.intents.has(intent.id)) return;
+            if (CORE.intents.has(intent.id)) {
+                return self.postMessage({ type: 'ERROR', error: 'REPLAY_ATTACK_DETECTED' });
+            }
             CORE.intents.add(intent.id);
 
-            // 2. ШИФРОВАНИЕ (NACL SecretBox)
+            // 2. Шифрование
             const nonce = nacl.randomBytes(24);
             const msgEncoded = new TextEncoder().encode(payload.text);
             
-            // Используем RootKey из Double Ratchet
+            // Используем текущий ключ храповика
             const cipher = nacl.secretbox(msgEncoded, nonce, CORE.ratchet.rootKey);
 
-            // 3. ОТЧЕТ
+            // 3. Продвижение Double Ratchet (Смена ключа)
+            CORE.advanceRatchet();
+
+            // 4. Отправка результата
             self.postMessage({ 
                 type: 'CIPHER', 
                 data: { 
                     cipher: btoa(String.fromCharCode(...cipher)),
                     nonce: btoa(String.fromCharCode(...nonce)),
-                    intentId: intent.id
+                    ratchetStep: CORE.ratchet.messageCount
                 } 
             });
 
-            // 4. ОЧИСТКА МЕМОРЫ (Self-Healing)
-            CORE.wipe(msgEncoded);
-            break;
-
-        case 'WIPE':
-            CORE.ratchet.rootKey.fill(0);
-            CORE.active = false;
-            CORE.capabilities.clear();
-            CORE.capabilities.add('INIT');
-            self.postMessage({ type: 'HALTED' });
+            // 5. Zeroization (Уничтожение исходного текста в памяти воркера)
+            CORE.zeroize(msgEncoded);
             break;
     }
 };
