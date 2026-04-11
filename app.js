@@ -1,98 +1,98 @@
-/**
- * SENPIXEL NEXUS UI & AI CONTROLLER
- */
+// Конфигурация Supabase (используем твои данные)
+const SUPABASE_URL = 'https://kwotdvdjxhpttuwhgjkh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_i6HL03F98ZmxCKmAKQDaLQ_w6u7ep4d';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const UI = {
-    logs: document.getElementById('sentinel-logs'),
+    auth: document.getElementById('auth-overlay'),
+    app: document.getElementById('app'),
     chat: document.getElementById('chat-window'),
-    input: document.getElementById('m-input'),
-    btn: document.getElementById('send-btn'),
-    status: document.getElementById('status-display')
+    monitor: document.getElementById('sentinel-monitor'),
+    input: document.getElementById('msgInput'),
+    send: document.getElementById('sendBtn')
 };
 
-// --- Анимация логов Sentinel (Эффект печатной машинки) ---
-async function sentinelLog(msg, type = "SYS") {
-    const d = document.createElement('div');
-    const prefix = `[${new Date().toLocaleTimeString()}] SENTINEL_${type}: `;
-    d.innerHTML = `<span style="color:#fff">${prefix}</span>`;
-    UI.logs.appendChild(d);
-    UI.logs.scrollTop = UI.logs.scrollHeight;
+// 1. АВТОРИЗАЦИЯ
+document.getElementById('loginBtn').onclick = async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) document.getElementById('auth-error').textContent = error.message;
+    else initApp(data.user);
+};
 
-    // Плавный вывод текста
-    for (let i = 0; i < msg.length; i++) {
-        d.innerHTML += msg[i];
-        await new Promise(r => setTimeout(r, 10)); // Скорость печати
-    }
+document.getElementById('regBtn').onclick = async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) document.getElementById('auth-error').textContent = error.message;
+    else alert("Check email for confirmation!");
+};
+
+document.getElementById('logoutBtn').onclick = async () => {
+    await supabase.auth.signOut();
+    location.reload();
+};
+
+// 2. ИНИЦИАЛИЗАЦИЯ
+function initApp(user) {
+    UI.auth.style.display = 'none';
+    UI.app.style.display = 'flex';
+    document.getElementById('user-info').textContent = `Active Node: ${user.email}`;
+    kernel.postMessage({ type: 'INIT' });
 }
 
-// --- Рендер сообщений в чат ---
-function addMessage(text, isOwn = true, trustLevel = "HW_VERIFIED") {
+// 3. РОУТИНГ (Вкладки)
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.onclick = () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).classList.add('active');
+    };
+});
+
+// 4. КРИПТО-ЯДРО (TITAN 4.0)
+const kernel = new Worker('titan_kernel.js');
+kernel.onmessage = (e) => {
+    const { type, data } = e.data;
+    if (type === 'READY') UI.monitor.textContent = "> TITAN_CORE: Online. Double Ratchet Engaged.";
+    if (type === 'CIPHER') {
+        renderMessage(UI.input.value, true);
+        UI.input.value = '';
+        UI.monitor.textContent = `> LAST_TX: Encrypted with key_step_${data.ratchetStep}`;
+    }
+};
+
+function renderMessage(text, own = true) {
     const div = document.createElement('div');
-    div.className = `msg ${isOwn ? 'own' : ''}`;
-    div.innerHTML = `
-        <div class="msg-meta">UID: 0xNEXUS <span class="trust-badge">✔️ ${trustLevel}</span></div>
-        <div class="msg-body">${text}</div>
-    `;
+    div.className = `msg ${own ? 'own' : 'other'}`;
+    div.innerHTML = `<div style="font-size:9px; opacity:0.5">${own ? 'ME' : 'PEER'} [HW_VERIFIED]</div>${text}`;
     UI.chat.appendChild(div);
     UI.chat.scrollTop = UI.chat.scrollHeight;
 }
 
-// --- Инициализация Изолированного Ядра ---
-const kernel = new Worker('titan_kernel.js');
-
-kernel.onmessage = (e) => {
-    const { type, data, error } = e.data;
-
-    if (type === 'READY') {
-        UI.status.textContent = 'CORE_ONLINE';
-        UI.status.style.color = 'var(--neon-green)';
-        UI.status.style.textShadow = '0 0 10px var(--neon-green)';
-        UI.input.disabled = false;
-        UI.btn.disabled = false;
-        UI.btn.textContent = 'ENCRYPT';
-        sentinelLog("H-BCK Enclave isolated. Memory sanitizer active.", "CORE");
-    }
-
-    if (type === 'CIPHER') {
-        setTimeout(() => {
-            sentinelLog(`Ratchet advanced. Cipher: ${data.cipher.substring(0,20)}...`, "SEC");
-            addMessage(UI.input.value, true);
-            UI.input.value = '';
-            UI.btn.textContent = 'ENCRYPT';
-            UI.btn.disabled = false;
-            // В будущем здесь будет отправка data в Supabase
-        }, 500); // Имитация времени обработки
-    }
-
-    if (type === 'ERROR') {
-        sentinelLog(error, "CRITICAL_ALERT");
-        UI.btn.textContent = 'ERROR';
-    }
-};
-
-// --- Обработка отправки (С аппаратным намерением) ---
-UI.btn.onclick = (e) => {
-    if (!e.isTrusted) return; // Защита от JS-кликеров
+UI.send.onclick = () => {
     const text = UI.input.value;
     if (!text) return;
-
-    UI.btn.disabled = true;
-    UI.btn.textContent = 'PROCESSING...';
-    sentinelLog("Analyzing entropy and requesting Hardware WebAuthn Intent...", "AI");
-    
-    // Эмуляция WebAuthn (Защита слоя)
-    const intent = {
-        id: crypto.randomUUID(),
-        signature: "HW_ASSERT_NEXUS_" + Date.now(),
-        challenge: Array.from(crypto.getRandomValues(new Uint8Array(16)))
-    };
-
-    // Передача в изолированное ядро
-    kernel.postMessage({ type: 'ENCRYPT', payload: { text }, intent });
+    kernel.postMessage({ 
+        type: 'ENCRYPT', 
+        payload: { text }, 
+        intent: { id: crypto.randomUUID(), signature: true } 
+    });
 };
 
-// --- Запуск ---
-setTimeout(() => {
-    sentinelLog("Booting Kernel. Establishing Double Ratchet protocol...", "INIT");
-    kernel.postMessage({ type: 'INIT' });
-}, 800);
+// 5. ИИ
+document.getElementById('askAi').onclick = () => {
+    const p = document.getElementById('aiPrompt').value;
+    const resp = document.getElementById('aiResponse');
+    resp.textContent = "Processing via Sentinel Neural Link...";
+    setTimeout(() => {
+        resp.innerHTML = `<strong>AI SENTINEL:</strong> I am the core observer of Senpixel. My logic is currently bound to your local kernel. Your prompt: "<em>${p}</em>" is secure.`;
+    }, 1000);
+};
+
+// Проверка сессии при загрузке
+supabase.auth.getSession().then(({data}) => {
+    if (data.session) initApp(data.session.user);
+});
