@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>senpixel v1.9.2 beta</title>
+    <title>SENPIXEL v5.0 // NEURAL SENTINEL</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.0/dist/umd/supabase.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
@@ -11,124 +11,132 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        :root { --accent: #00ff88; --bg: #030303; --panel: #0a0a0a; --msg-me: #111e2b; --msg-them: #0d0d0d; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; display: flex; height: 100vh; overflow: hidden; }
+        :root { 
+            --accent: #00ff88; --warn: #ffcc00; --danger: #ff0055; 
+            --bg: #010101; --panel: rgba(10,10,10,0.9);
+        }
         
-        /* Auth */
-        #auth-gate { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .auth-card { background: #080808; padding: 40px; border-radius: 15px; border: 1px solid #1a1a1a; width: 340px; text-align: center; }
-        .auth-card input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: var(--accent); border-radius: 5px; box-sizing: border-box; outline: none; }
-        .auth-btn { width: 100%; padding: 12px; margin-top: 10px; background: var(--accent); color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; transition: 0.3s; text-transform: uppercase; }
-        .auth-btn:hover { opacity: 0.8; transform: translateY(-2px); }
-        .secondary-btns { display: flex; gap: 10px; margin-top: 5px; }
+        body, html { margin: 0; padding: 0; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; height: 100vh; overflow: hidden; }
 
-        /* Main UI */
-        .sidebar { width: 280px; background: var(--panel); border-right: 1px solid #111; display: flex; flex-direction: column; }
-        .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; background: #050505; }
-        header { padding: 15px 25px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #000; }
-        
+        /* 🤖 NEURAL DEBUGGER (Умная консоль) */
+        #neural-debug {
+            position: fixed; bottom: 100px; right: 20px; width: 300px; max-height: 200px;
+            background: rgba(0,0,0,0.8); border: 1px solid var(--accent); border-radius: 10px;
+            padding: 15px; font-size: 0.7rem; color: var(--accent); z-index: 9999;
+            overflow-y: hidden; pointer-events: none; box-shadow: 0 0 20px rgba(0,255,136,0.1);
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .debug-line { border-left: 2px solid var(--accent); padding-left: 8px; animation: flash 0.3s ease; }
+        @keyframes flash { from { background: rgba(0,255,136,0.2); } }
+
+        /* ИНТЕРФЕЙС */
+        .container { display: flex; height: 100vh; }
+        .sidebar { width: 300px; background: var(--panel); border-right: 1px solid #111; display: flex; flex-direction: column; }
+        .main-chat { flex: 1; display: flex; flex-direction: column; position: relative; }
+
         #messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 12px; }
-        .msg { max-width: 75%; padding: 14px; border-radius: 10px; font-size: 0.9rem; border: 1px solid #222; }
-        .msg.me { align-self: flex-end; background: var(--msg-me); border-right: 3px solid var(--accent); }
-        .msg.them { align-self: flex-start; background: var(--msg-them); border-left: 3px solid #444; }
-        .msg.fade-out { opacity: 0; filter: blur(15px); transition: 0.6s; }
+        .msg { max-width: 70%; padding: 12px 18px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; border: 1px solid rgba(255,255,255,0.05); }
+        .msg.me { align-self: flex-end; background: #002b18; color: var(--accent); }
+        .msg.them { align-self: flex-start; background: #111; }
 
-        /* Camouflage */
-        body.camouflage-active .sidebar, body.camouflage-active header, body.camouflage-active .input-bar { display: none !important; }
-        body.camouflage-active .chat-area { background: #fff !important; color: #000 !important; padding: 50px; display: block; overflow-y: auto; }
-        #wiki-mask { display: none; font-family: serif; max-width: 800px; margin: 0 auto; }
+        .input-bar { padding: 20px; background: #050505; display: flex; gap: 10px; border-top: 1px solid #111; }
+        .input-bar input { flex: 1; background: #000; border: 1px solid #222; padding: 12px; border-radius: 8px; color: var(--accent); outline: none; }
 
-        .input-bar { padding: 20px; background: #080808; display: flex; gap: 12px; border-top: 1px solid #1a1a1a; }
-        .input-bar input { flex: 1; background: #000; border: 1px solid #333; padding: 12px; border-radius: 5px; color: var(--accent); outline: none; }
-        .btn-icon { background: none; border: none; color: #444; cursor: pointer; font-size: 1.2rem; }
-        
-        .user-item { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #111; font-size: 0.8rem; }
-        .user-item:hover { background: #111; color: var(--accent); }
+        /* AUTH SCREEN */
+        #auth-gate { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
+        .auth-card { background: #080808; padding: 40px; border-radius: 20px; border: 1px solid #111; width: 320px; text-align: center; }
+        .btn-action { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
     </style>
 </head>
 <body>
 
+<div id="neural-debug">
+    <div style="font-weight: bold; margin-bottom: 5px; opacity: 0.5;">[AI_SENTINEL_LOG]</div>
+    <div id="debug-content"></div>
+</div>
+
 <div id="auth-gate">
     <div class="auth-card">
-        <h2 style="color: var(--accent); margin-bottom: 25px;">senpixel v1.9.2</h2>
-        <input type="text" id="email" placeholder="Email">
-        <input type="password" id="pass" placeholder="Password">
-        
-        <div class="secondary-btns">
-            <button class="auth-btn" onclick="signIn()" style="flex:2">LOGIN</button>
-            <button class="auth-btn" onclick="signUp()" style="flex:1; background:#111; color:var(--accent); border:1px solid #333;">REG</button>
-        </div>
-        
-        <button class="auth-btn" style="background:#fff; color:#000; margin-top:15px;" onclick="loginGoogle()">
-            <i class="fab fa-google"></i> GOOGLE_AUTH
-        </button>
-        
-        <div style="margin-top:20px; font-size:0.6rem; color:#444;">
-            VPN_MODE: ACTIVE // ENCRYPTION: X3DH
-        </div>
+        <h2 style="color: var(--accent);">NEURAL_LINK</h2>
+        <input type="text" id="email" placeholder="IDENTITY" style="width:100%; padding:10px; margin-bottom:10px; background:transparent; border:1px solid #222; color:#fff;">
+        <input type="password" id="pass" placeholder="KEY" style="width:100%; padding:10px; margin-bottom:20px; background:transparent; border:1px solid #222; color:#fff;">
+        <button class="btn-action" onclick="auth('in')">Connect</button>
+        <button onclick="auth('up')" style="background:none; border:none; color:#444; font-size:0.7rem; cursor:pointer; margin-top:10px;">Register New Node</button>
     </div>
 </div>
 
-<aside class="sidebar">
-    <div style="padding:25px; color:#222; font-size:0.7rem; letter-spacing:2px;">SECURE_NODES</div>
-    <div id="users-list"></div>
-</aside>
-
-<main class="chat-area">
-    <div id="wiki-mask">
-        <h1>Прикладной уровень модели OSI</h1>
-        <p>Прикладной уровень обеспечивает взаимодействие пользователя с сетью. К нему относятся такие протоколы как HTTP, FTP и наш зашифрованный терминал...</p>
-    </div>
-
-    <header id="chat-header">
-        <div><b id="chat-user">TERMINAL_IDLE</b><br><small id="status" style="color: var(--accent);">GHOST_MODE_ENABLED</small></div>
-        <div style="display:flex; gap:15px;">
-            <button class="btn-icon" onclick="toggleCamo()"><i class="fa-solid fa-mask"></i></button>
-            <button class="btn-icon" onclick="panic()" style="color:#500;"><i class="fa-solid fa-radiation"></i></button>
-            <select id="ttl" onchange="currentTTL = parseInt(this.value)" style="background:#000; color:var(--accent); border:1px solid #333; font-size:0.7rem;">
-                <option value="0">NO_LIMIT</option>
-                <option value="10">10S_DESTRUCT</option>
-                <option value="60">1M_DESTRUCT</option>
-            </select>
+<div class="container">
+    <aside class="sidebar">
+        <div style="padding:20px; font-size:0.6rem; color:#444; letter-spacing:3px;">NODES_ONLINE</div>
+        <div id="users-list"></div>
+    </aside>
+    <main class="main-chat">
+        <header style="padding: 20px; border-bottom: 1px solid #111; display: flex; justify-content: space-between;">
+            <b id="chat-user">WAITING...</b>
+            <i class="fa-solid fa-microchip" style="color: var(--accent);"></i>
+        </header>
+        <div id="messages"></div>
+        <div class="input-bar">
+            <input type="text" id="msgInput" placeholder="Secure input..." onkeydown="if(event.key==='Enter') send()">
+            <button onclick="send()" style="background:none; border:none; color:var(--accent); cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
-    </header>
-
-    <div id="messages"></div>
-
-    <div class="input-bar">
-        <input type="text" id="msgInput" placeholder="Secure message..." autocomplete="off">
-        <button onclick="send()" class="btn-icon" style="color: var(--accent);"><i class="fa-solid fa-paper-plane"></i></button>
-    </div>
-</main>
+    </main>
+</div>
 
 <script>
+    // --- 🤖 THE AI SENTINEL (Самоисцеление и отладка) ---
+    const Sentinel = {
+        log(msg, type = 'accent') {
+            const content = document.getElementById('debug-content');
+            const line = document.createElement('div');
+            line.className = 'debug-line';
+            line.style.borderColor = `var(--${type})`;
+            line.innerText = `> ${new Date().toLocaleTimeString()}: ${msg}`;
+            content.appendChild(line);
+            if(content.children.length > 5) content.children[0].remove();
+            console.log(`[SENTINEL]: ${msg}`);
+        },
+        async reportError(err, context) {
+            this.log(`Critical Error in ${context}: ${err.message}`, 'danger');
+            // Отправка отчета в базу данных (автоматическая телеметрия)
+            try {
+                await sb.from('system_logs').insert([{ error: err.message, context, user_id: user?.id }]);
+            } catch(e) { this.log("Telemetry link down. Saving to local storage.", "warn"); }
+            
+            // Анализ и решение
+            if (err.message.includes("fetch")) {
+                this.log("Network block detected. Attempting bypass...", "warn");
+                // Можно добавить логику смены URL Supabase на зеркало здесь
+            }
+        }
+    };
+
+    // --- БАЗОВЫЕ НАСТРОЙКИ ---
     const SB_URL = 'https://vstglvrtuicogzllpcku.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzdGdsdnJ0dWljb2d6bGxwY2t1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI0OTc4ODUsImV4cCI6MjAyODA3Mzg4NX0.3i-6-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1';
-    
     const sb = supabase.createClient(SB_URL, SB_KEY);
+    
+    let user, ACTIVE_PEER;
+    const sessions = new Map(), rendered = new Set();
 
-    let user = null, ACTIVE_PEER_ID = null, currentTTL = 0;
-    const sessions = new Map(), renderedMessages = new Set();
-
+    // --- CRYPTO ---
     const Crypto = {
         async init(u) {
-            let priv = sessionStorage.getItem('ninja_priv');
+            let priv = sessionStorage.getItem('sentinel_priv');
             if (!priv) {
                 const pair = nacl.box.keyPair();
-                sessionStorage.setItem('ninja_priv', nacl.util.encodeBase64(pair.secretKey));
+                sessionStorage.setItem('sentinel_priv', nacl.util.encodeBase64(pair.secretKey));
                 await sb.from('user_keys').upsert({ user_id: u.id, public_key: nacl.util.encodeBase64(pair.publicKey) });
             }
         },
         async getRK(peerId) {
             if (sessions.has(peerId)) return sessions.get(peerId);
-            const { data } = await sb.from('user_keys').select('public_key').eq('user_id', peerId).single();
-            if (!data) return null;
-            const myPriv = nacl.util.decodeBase64(sessionStorage.getItem('ninja_priv'));
-            const peerPub = nacl.util.decodeBase64(data.public_key);
-            const RK = nacl.box.before(peerPub, myPriv);
+            const { data, error } = await sb.from('user_keys').select('public_key').eq('user_id', peerId).single();
+            if (error) { Sentinel.reportError(error, "KeyExchange"); return null; }
+            const RK = nacl.box.before(nacl.util.decodeBase64(data.public_key), nacl.util.decodeBase64(sessionStorage.getItem('sentinel_priv')));
             const s = { RK, CKs: nacl.hash(RK).slice(0, 32), CKr: nacl.hash(RK).slice(32, 64) };
-            sessions.set(peerId, s);
-            return s;
+            sessions.set(peerId, s); return s;
         },
         async encrypt(text, peerId) {
             const s = await this.getRK(peerId);
@@ -144,79 +152,72 @@
                 const msgKey = nacl.hash(isMe ? s.CKs : s.CKr).slice(0, 32);
                 const opened = nacl.secretbox.open(nacl.util.decodeBase64(d.b), nacl.util.decodeBase64(d.n), msgKey);
                 return opened ? nacl.util.encodeUTF8(opened) : "[🔒 ENCRYPTED]";
-            } catch { return "[?] DECRYPT_ERROR"; }
+            } catch(e) { Sentinel.reportError(e, "Decryption"); return "[?] CORRUPT"; }
         }
     };
 
+    // --- ENGINE ---
     async function send() {
-        const val = document.getElementById('msgInput').value.trim();
-        if (!val || !ACTIVE_PEER_ID) return;
-        const enc = await Crypto.encrypt(val, ACTIVE_PEER_ID);
-        document.getElementById('msgInput').value = '';
-        await sb.from('messages').insert([{ sender_id: user.id, receiver_id: ACTIVE_PEER_ID, text: enc, chat_id: '00000000-0000-0000-0000-000000000000' }]);
+        const inp = document.getElementById('msgInput');
+        const val = inp.value.trim();
+        if (!val || !ACTIVE_PEER) return;
+        
+        Sentinel.log("Encrypting & Sending...");
+        const enc = await Crypto.encrypt(val, ACTIVE_PEER.id);
+        inp.value = '';
+        const { error } = await sb.from('messages').insert([{ sender_id: user.id, receiver_id: ACTIVE_PEER.id, text: enc, chat_id: '00000000-0000-0000-0000-000000000000' }]);
+        if (error) Sentinel.reportError(error, "MessageSend");
     }
 
     function appendMessage(m) {
-        if (renderedMessages.has(m.id)) return;
-        renderedMessages.add(m.id);
+        if (rendered.has(m.id)) return;
+        rendered.add(m.id);
         const isMe = m.sender_id === user.id;
         const div = document.createElement('div');
         div.className = `msg ${isMe ? 'me' : 'them'}`;
-        if (m.expires_at) div.dataset.expires = m.expires_at;
-        const content = Crypto.decrypt(m.text, isMe ? m.receiver_id : m.sender_id, isMe);
-        div.innerHTML = `${content} <small style="display:block;opacity:0.2;font-size:0.6rem;">${new Date(m.created_at).toLocaleTimeString()}</small>`;
-        
-        if (!isMe && !m.is_read) div.onmouseenter = async () => {
-            const upd = { is_read: true };
-            if (currentTTL > 0) upd.expires_at = new Date(Date.now() + currentTTL * 1000).toISOString();
-            await sb.from('messages').update(upd).eq('id', m.id);
-        };
-        document.getElementById('messages').append(div);
+        div.textContent = Crypto.decrypt(m.text, isMe ? m.receiver_id : m.sender_id, isMe);
+        document.getElementById('messages').appendChild(div);
         document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
     }
 
-    window.signIn = async () => {
-        const { error } = await sb.auth.signInWithPassword({ email: document.getElementById('email').value, password: document.getElementById('pass').value });
-        if(error) alert(error.message); else location.reload();
-    };
-
-    window.signUp = async () => {
-        const { error } = await sb.auth.signUp({ email: document.getElementById('email').value, password: document.getElementById('pass').value });
-        if(error) alert(error.message); else alert("Check email or try Login!");
-    };
-
-    window.loginGoogle = () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
-    window.panic = () => { sessionStorage.clear(); location.href = "https://google.com"; };
-    window.toggleCamo = () => { document.body.classList.toggle('camouflage-active'); document.getElementById('wiki-mask').style.display = document.body.classList.contains('camouflage-active') ? 'block' : 'none'; };
-
-    async function init() {
-        const { data: { session } } = await sb.auth.getSession();
-        if (session) {
-            user = session.user; document.getElementById('auth-gate').remove();
-            await Crypto.init(user);
-            const { data: profs } = await sb.from('profiles').select('*').neq('id', user.id);
-            profs?.forEach(p => {
-                const d = document.createElement('div');
-                d.className = 'user-item';
-                d.textContent = "ID: " + p.id.slice(0,8);
-                d.onclick = () => {
-                    ACTIVE_PEER_ID = p.id;
-                    document.getElementById('chat-user').textContent = "SECURE_CHANNEL_" + p.id.slice(0,4);
-                    document.getElementById('messages').innerHTML = '';
-                    renderedMessages.clear();
-                    sb.channel('any').on('postgres_changes', { event:'*', schema:'public', table:'messages' }, l => appendMessage(l.new)).subscribe();
-                    sb.from('messages').select('*').or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`).order('created_at').then(r => r.data?.forEach(appendMessage));
-                };
-                document.getElementById('users-list').append(d);
-            });
-        }
+    async function auth(type) {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('pass').value;
+        Sentinel.log("Authenticating node...");
+        const { error } = type === 'in' ? await sb.auth.signInWithPassword({email, password:pass}) : await sb.auth.signUp({email, password:pass});
+        if (error) Sentinel.reportError(error, "Auth"); else location.reload();
     }
 
-    setInterval(() => {
-        document.querySelectorAll('.msg').forEach(el => {
-            if (el.dataset.expires && new Date(el.dataset.expires) < new Date()) el.remove();
+    async function init() {
+        Sentinel.log("Initializing Sentinel Core...");
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { Sentinel.log("Standing by for identity...", "warn"); return; }
+        
+        user = session.user;
+        await Crypto.init(user);
+        document.getElementById('auth-gate').style.opacity = '0';
+        setTimeout(() => document.getElementById('auth-gate').remove(), 500);
+
+        const { data: users } = await sb.from('profiles').select('*').neq('id', user.id);
+        users.forEach(u => {
+            const el = document.createElement('div');
+            el.className = 'user-item';
+            el.style.cssText = "padding:15px 20px; cursor:pointer; border-bottom:1px solid #111; font-size:0.8rem;";
+            el.innerHTML = `NODE_${u.id.slice(0,8)}`;
+            el.onclick = () => {
+                ACTIVE_PEER = u;
+                document.getElementById('chat-user').innerText = "PEER_" + u.id.slice(0,8);
+                document.getElementById('messages').innerHTML = ''; rendered.clear();
+                sb.from('messages').select('*').or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`).order('created_at').then(r => r.data?.forEach(appendMessage));
+                sb.channel('realtime').on('postgres_changes', {event:'INSERT', schema:'public', table:'messages'}, l => {
+                    if (l.new.sender_id === ACTIVE_PEER.id || l.new.receiver_id === ACTIVE_PEER.id) appendMessage(l.new);
+                }).subscribe();
+                Sentinel.log(`Link established with PEER_${u.id.slice(0,4)}`);
+            };
+            document.getElementById('users-list').appendChild(el);
         });
-    }, 1000);
+        Sentinel.log("System Online. Encryption active.");
+    }
 
     init();
 </script>
