@@ -2,52 +2,100 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Senpixel Messenger</title>
-    <!-- Заглушка для иконки, чтобы не было ошибки 404 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
     <link rel="manifest" href="./manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { margin: 0; background: #0b0e11; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        #auth-container, #chat-container { display: none; flex-direction: column; height: 100%; padding: 20px; box-sizing: border-box; }
-        input, button { padding: 14px; margin: 8px 0; border-radius: 12px; border: none; outline: none; font-size: 16px; }
-        input { background: #1f2227; color: white; border: 1px solid #2d3139; }
-        button { background: #ff3333; color: white; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
-        button:active { opacity: 0.8; }
-        #messages { flex: 1; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .msg { background: #1f2227; padding: 12px; border-radius: 14px; max-width: 85%; align-self: flex-start; line-height: 1.4; }
-        .my-msg { align-self: flex-end; background: #ff3333; }
-        .header { padding-bottom: 20px; border-bottom: 1px solid #1f2227; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        /* Цветовая палитра и переменные */
+        :root {
+            --bg-color: #0b0e11;
+            --panel-bg: #1f2227;
+            --accent: #ff3333;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+        }
+
+        body { 
+            margin: 0; background: var(--bg-color); color: var(--text-main); 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden; 
+        }
+
+        /* Ограничение ширины для ПК-версии */
+        #auth-container, #chat-container { 
+            display: none; flex-direction: column; height: 100%; padding: 20px; box-sizing: border-box; 
+            max-width: 600px; margin: 0 auto; width: 100%;
+        }
+
+        /* Стили формы авторизации */
+        h2 { text-align: center; font-size: 28px; margin-bottom: 5px; }
+        .subtitle { color: var(--text-muted); text-align: center; font-size: 14px; margin-bottom: 25px; }
+        
+        input, button { padding: 15px; margin: 8px 0; border-radius: 12px; border: none; outline: none; font-size: 16px; font-family: inherit; }
+        input { background: var(--panel-bg); color: var(--text-main); border: 1px solid #2d3139; transition: border 0.3s; }
+        input:focus { border-color: var(--accent); }
+        
+        button { background: var(--accent); color: white; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        button:active { transform: scale(0.98); }
+        .btn-outline { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+
+        /* Сообщение об успешной регистрации */
+        #success-msg {
+            display: none; background: #1e3a29; color: #4ade80; padding: 15px; border-radius: 12px;
+            text-align: center; margin-top: 15px; font-size: 14px; line-height: 1.5; border: 1px solid #2d5a3f;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Стили чата */
+        .header { padding-bottom: 15px; border-bottom: 1px solid var(--panel-bg); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        
+        #messages { flex: 1; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
+        #messages::-webkit-scrollbar { width: 6px; }
+        #messages::-webkit-scrollbar-thumb { background: #2d3139; border-radius: 3px; }
+        
+        /* Пузыри сообщений */
+        .msg { background: var(--panel-bg); padding: 12px 16px; border-radius: 18px 18px 18px 4px; max-width: 80%; align-self: flex-start; line-height: 1.4; word-wrap: break-word; }
+        .my-msg { align-self: flex-end; background: var(--accent); border-radius: 18px 18px 4px 18px; }
+        .author { display: block; font-size: 11px; opacity: 0.6; margin-bottom: 4px; }
+
+        /* Зона ввода сообщения */
+        .input-area { display: flex; gap: 10px; background: var(--bg-color); padding-top: 10px; border-top: 1px solid var(--panel-bg); }
+        .input-area input { flex: 1; margin: 0; border-radius: 20px; padding: 15px 20px; }
+        .input-area button { margin: 0; border-radius: 50%; width: 50px; height: 50px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; }
     </style>
 </head>
 <body>
 
-    <!-- Экран входа -->
-    <div id="auth-container" style="display: flex;">
-        <h2 style="text-align: center;">Senpixel Chat</h2>
-        <p style="color: #888; text-align: center; font-size: 14px;">Введи почту и пароль для входа</p>
+    <div id="auth-container">
+        <h2>Senpixel Chat</h2>
+        <p class="subtitle">Введи почту и пароль для входа</p>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Пароль">
         <button onclick="handleAuth('signIn')">Войти</button>
-        <button onclick="handleAuth('signUp')" style="background: transparent; color: #ff3333; border: 1px solid #ff3333;">Создать аккаунт</button>
+        <button class="btn-outline" onclick="handleAuth('signUp')">Создать аккаунт</button>
+        
+        <div id="success-msg"></div>
     </div>
 
-    <!-- Экран чата -->
     <div id="chat-container">
         <div class="header">
-            <span>Senpixel Messenger</span>
-            <button onclick="signOut()" style="padding: 5px 10px; font-size: 12px; background: #2d3139;">Выйти</button>
+            <span style="font-weight: bold; font-size: 18px;">Senpixel Messenger</span>
+            <button onclick="signOut()" style="padding: 6px 12px; font-size: 12px; border-radius: 8px; background: #2d3139;">Выйти</button>
         </div>
+        
         <div id="messages"></div>
-        <div style="display: flex; gap: 10px; background: #0b0e11; padding-top: 10px;">
-            <input type="text" id="msgInput" placeholder="Написать..." style="flex: 1;">
-            <button onclick="sendMessage()" style="padding: 10px 20px;">➜</button>
+        
+        <div class="input-area">
+            <input type="text" id="msgInput" placeholder="Сообщение..." onkeypress="if(event.key === 'Enter') sendMessage()">
+            <button onclick="sendMessage()">➜</button>
         </div>
     </div>
 
     <script>
-        // ТВОИ ДАННЫЕ ВСТАВЛЕНЫ
+        // Твои рабочие ключи Supabase
         const SB_URL = "https://kwotdvdjxhpttuwhgjkh.supabase.co";
         const SB_KEY = "sb_publishable_i6HL03F98ZmxCKmAKQDaLQ_w6u7ep4d";
 
@@ -56,18 +104,37 @@
         const authCont = document.getElementById('auth-container');
         const chatCont = document.getElementById('chat-container');
         const messagesDiv = document.getElementById('messages');
+        const successMsg = document.getElementById('success-msg');
+
+        // Функция защиты от вредоносного кода (XSS)
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
 
         async function handleAuth(type) {
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            if (!email || !password) return alert('Заполни все поля');
+            
+            successMsg.style.display = 'none';
+
+            if (!email || !password) return alert('Пожалуйста, заполни все поля!');
 
             const { data, error } = type === 'signUp' 
                 ? await supabaseClient.auth.signUp({ email, password })
                 : await supabaseClient.auth.signInWithPassword({ email, password });
 
-            if (error) alert(error.message);
-            else checkUser();
+            if (error) {
+                alert(error.message);
+            } else {
+                if (type === 'signUp' && data.user && !data.session) {
+                    successMsg.innerHTML = "✅ Письмо отправлено!<br>Зайдите на почту и подтвердите свой аккаунт.<br><br>✅ Email sent!<br>Please check your inbox to confirm your account.";
+                    successMsg.style.display = 'block';
+                } else {
+                    checkUser();
+                }
+            }
         }
 
         async function signOut() {
@@ -82,10 +149,11 @@
                 chatCont.style.display = 'flex';
                 loadMessages();
                 
-                // Realtime подписка
                 supabaseClient.channel('public:messages').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     addMessageToUI(payload.new, user.email);
                 }).subscribe();
+            } else {
+                authCont.style.display = 'flex';
             }
         }
 
@@ -93,32 +161,42 @@
             const { data: { user } } = await supabaseClient.auth.getUser();
             const { data } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true }).limit(50);
             messagesDiv.innerHTML = '';
-            if (data) data.forEach(m => addMessageToUI(m, user.email));
+            if (data) {
+                data.forEach(m => addMessageToUI(m, user.email));
+                setTimeout(() => messagesDiv.scrollTop = messagesDiv.scrollHeight, 100);
+            }
         }
 
         function addMessageToUI(msg, currentEmail) {
             const div = document.createElement('div');
             const isMy = msg.user_email === currentEmail;
             div.className = isMy ? 'msg my-msg' : 'msg';
-            div.innerHTML = `<small style="display:block; font-size:10px; opacity:0.6;">${msg.user_email.split('@')[0]}</small>${msg.content}`;
+            
+            // Безопасный вывод текста
+            const safeText = escapeHTML(msg.content);
+            const authorText = msg.user_email.split('@')[0];
+            
+            div.innerHTML = `<span class="author">${authorText}</span>${safeText}`;
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
         async function sendMessage() {
             const input = document.getElementById('msgInput');
+            const text = input.value.trim();
             const { data: { user } } = await supabaseClient.auth.getUser();
-            if (input.value.trim() && user) {
-                const text = input.value;
-                input.value = '';
+            
+            if (text && user) {
+                input.value = ''; // Очищаем поле сразу для скорости
                 const { error } = await supabaseClient.from('messages').insert([{ content: text, user_email: user.email }]);
                 if (error) {
                     console.error(error);
-                    alert('Ошибка отправки. Проверь настройки RLS в Supabase.');
+                    alert('Ошибка отправки. Проверьте подключение к интернету.');
                 }
             }
         }
 
+        // Регистрация Service Worker для установки приложения на телефон
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js').catch(err => console.log("SW error", err));
         }
