@@ -3,134 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Senpixel Omni v4.1 // Nexus</title>
+    <title>Senpixel v5.0 // Singularity</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; worker-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co;">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --neon: #00ffa2; --blue: #00e5ff; --bg: #030508;
-            --panel: rgba(10, 15, 20, 0.85); --border: rgba(0, 255, 162, 0.2);
-        }
+        :root { --neon: #00ffa2; --bg: #050810; --panel: rgba(10, 15, 25, 0.85); --border: rgba(0, 255, 162, 0.15); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-        /* Живые обои */
+        /* Живые обои "Матрица/Сетка" */
         body {
-            margin: 0; height: 100vh; background: var(--bg); color: var(--neon);
-            font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden;
+            background-color: var(--bg); color: #e8eef2; height: 100vh; overflow: hidden; display: flex;
             background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
-            background-size: 40px 40px; animation: gridMove 20s linear infinite;
+            background-size: 30px 30px; animation: grid 20s linear infinite;
         }
-        @keyframes gridMove { from { background-position: 0 0; } to { background-position: 40px 40px; } }
+        @keyframes grid { 0% { background-position: 0 0; } 100% { background-position: 30px 30px; } }
 
-        /* Авторизация */
-        #auth-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-            display: flex; align-items: center; justify-content: center; z-index: 10000;
+        /* Авторизация (Glassmorphism) */
+        #auth-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
-        .auth-card {
-            background: var(--panel); backdrop-filter: blur(15px); padding: 40px;
-            border: 1px solid var(--neon); border-radius: 15px; width: 320px; text-align: center;
-        }
-        input {
-            width: 100%; padding: 12px; margin: 10px 0; background: #000;
-            border: 1px solid var(--border); color: #fff; border-radius: 8px; outline: none;
-        }
-        button {
-            width: 100%; padding: 12px; background: var(--neon); color: #000;
-            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;
-        }
+        .modal-content { background: var(--panel); padding: 40px; border-radius: 16px; border: 1px solid var(--neon); width: 340px; text-align: center; box-shadow: 0 0 40px rgba(0,255,162,0.1); }
+        .modal-content input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: 1px solid var(--border); background: #000; color: #fff; outline: none; }
+        .modal-content button { width: 100%; padding: 14px; margin-top: 15px; border-radius: 8px; border: none; background: var(--neon); color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .modal-content button:hover { box-shadow: 0 0 15px var(--neon); }
 
-        /* Главный интерфейс */
-        #app { display: none; height: 100vh; width: 100vw; flex-direction: row; }
+        /* App Layout */
+        #app { display: none; width: 100%; height: 100%; }
         
-        /* Боковая панель (Sidebar) */
-        .sidebar {
-            width: 300px; background: var(--panel); backdrop-filter: blur(10px);
-            border-right: 1px solid var(--border); display: flex; flex-direction: column;
-        }
-        .nav-tabs { display: flex; padding: 10px; gap: 5px; background: rgba(0,0,0,0.3); }
-        .tab-btn {
-            flex: 1; padding: 10px; font-size: 12px; background: transparent;
-            color: #7f91a4; border: 1px solid transparent; border-radius: 8px; cursor: pointer;
-        }
-        .tab-btn.active { color: var(--neon); border-color: var(--neon); background: rgba(0,255,162,0.05); }
+        /* Sidebar (Левое меню) */
+        .sidebar { width: 320px; background: rgba(15, 20, 30, 0.95); border-right: 1px solid var(--border); display: flex; flex-direction: column; backdrop-filter: blur(5px); }
+        .header-brand { padding: 20px; font-weight: 800; font-size: 1.2rem; color: var(--neon); border-bottom: 1px solid var(--border); letter-spacing: 2px; }
+        .nav-tabs { display: flex; padding: 10px; gap: 5px; overflow-x: auto; }
+        .nav-btn { flex: 1; background: transparent; border: 1px solid transparent; color: #7f91a4; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .nav-btn.active { color: var(--neon); border-color: var(--border); background: rgba(0,255,162,0.05); }
+        .chat-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .chat-item { padding: 15px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: 0.2s; display: flex; align-items: center; gap: 12px; }
+        .chat-item:hover { background: rgba(255,255,255,0.05); border-color: var(--border); }
 
-        /* Основная зона */
-        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .view-container { display: none; flex: 1; flex-direction: column; height: 100%; }
+        /* Main Content */
+        .main { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .view-container { display: none; flex-direction: column; width: 100%; height: 100%; }
         .view-container.active { display: flex; }
 
+        /* Панель ИИ Sentinel */
+        #sentinel-bar { background: rgba(0,0,0,0.8); border-bottom: 1px solid var(--border); padding: 8px 20px; font-family: monospace; font-size: 11px; color: #00e5ff; }
+
         /* Чат */
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .msg {
-            max-width: 70%; padding: 10px 15px; border-radius: 12px; font-size: 14px;
-            animation: slideUp 0.3s ease; line-height: 1.4;
-        }
-        .msg.own { align-self: flex-end; background: rgba(0,255,162,0.1); border: 1px solid var(--neon); }
-        .msg.other { align-self: flex-start; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Sentinel Monitor (Верхняя панель) */
-        #sentinel-monitor {
-            height: 60px; background: rgba(0,0,0,0.6); border-bottom: 1px solid var(--border);
-            padding: 5px 20px; font-size: 10px; color: var(--blue); overflow-y: hidden;
-        }
-
+        .messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+        .msg { max-width: 65%; padding: 12px 16px; border-radius: 12px; line-height: 1.4; position: relative; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.own { align-self: flex-end; background: rgba(0, 255, 162, 0.1); border: 1px solid var(--border); border-bottom-right-radius: 2px; }
+        .msg.other { align-self: flex-start; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
+        .msg img { max-width: 100%; border-radius: 8px; margin-top: 5px; }
+        .msg-meta { font-size: 0.7rem; color: #7f91a4; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        
         /* Ввод */
-        .input-area { padding: 20px; display: flex; gap: 10px; background: var(--panel); }
-        textarea {
-            flex: 1; background: #000; border: 1px solid var(--border); color: #fff;
-            padding: 12px; border-radius: 12px; resize: none; outline: none;
-        }
+        .input-area { display: flex; gap: 10px; padding: 15px 20px; background: rgba(10, 15, 25, 0.9); border-top: 1px solid var(--border); align-items: flex-end; }
+        .input-area textarea { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: #000; color: white; resize: none; max-height: 120px; outline: none; }
+        .icon-btn { background: transparent; border: none; color: var(--neon); font-size: 1.5rem; cursor: pointer; padding: 10px; transition: 0.2s; }
+        .icon-btn:hover { text-shadow: 0 0 10px var(--neon); }
+
+        /* Настройки & ИИ */
+        .generic-card { background: var(--panel); padding: 30px; border-radius: 16px; border: 1px solid var(--border); margin: 20px auto; width: 90%; max-width: 600px; }
     </style>
 </head>
 <body>
 
-    <div id="auth-overlay">
-        <div class="auth-card">
-            <h2 style="color:var(--neon)">NEXUS AUTH</h2>
-            <input type="email" id="email" placeholder="Email">
+    <div id="auth-modal">
+        <div class="modal-content">
+            <h2 style="color: var(--neon); margin-bottom: 20px; letter-spacing: 2px;">SENPIXEL CORE</h2>
+            <input type="email" id="email" placeholder="E-mail">
             <input type="password" id="password" placeholder="Password">
-            <button id="loginBtn">LOG IN</button>
-            <button id="regBtn" style="background:transparent; border:1px solid var(--neon); color:var(--neon)">REGISTER</button>
-            <p id="auth-error" style="color:red; font-size:10px; margin-top:10px;"></p>
+            <button id="loginBtn">INITIALIZE SESSION</button>
+            <button id="regBtn" style="background: transparent; border: 1px solid var(--neon); color: var(--neon);">CREATE NODE</button>
+            <div id="errorMsg" style="color:#ff3333; margin-top:15px; font-size: 12px;"></div>
         </div>
     </div>
 
     <div id="app">
         <div class="sidebar">
-            <div style="padding: 20px; font-weight: bold; font-size: 18px;">SENPIXEL <span style="font-size: 10px; color: var(--blue);">v4.1</span></div>
+            <div class="header-brand">SENPIXEL v5.0</div>
             <div class="nav-tabs">
-                <button class="tab-btn active" data-target="view-chat">CHATS</button>
-                <button class="tab-btn" data-target="view-ai">AI</button>
-                <button class="tab-btn" data-target="view-settings">SETTINGS</button>
+                <button class="nav-btn active" data-target="view-chat">CHATS</button>
+                <button class="nav-btn" data-target="view-ai">AI CORE</button>
+                <button class="nav-btn" data-target="view-settings">SYSTEM</button>
             </div>
-            <div id="chat-list" style="padding: 10px;">
-                <div style="padding: 15px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">📢 Global Cryptonode</div>
-            </div>
+            <div class="chat-list" id="chatList">
+                </div>
         </div>
 
-        <div class="main-content">
-            <div id="sentinel-monitor">Initializing Titan Core...</div>
+        <div class="main">
+            <div id="sentinel-bar">> SENTINEL: Awaiting Database Sync...</div>
 
             <div id="view-chat" class="view-container active">
-                <div id="chat-window"></div>
-                <div class="input-area">
-                    <textarea id="msgInput" rows="1" placeholder="Type encrypted message..."></textarea>
-                    <button id="sendBtn" style="width: auto;">SEND</button>
+                <div class="messages" id="messages">
+                    <div style="margin: auto; color: #7f91a4; font-family: monospace;">[ ESTABLISHING SECURE CONNECTION ]</div>
+                </div>
+                <div class="input-area" id="inputArea" style="visibility: hidden;">
+                    <label for="fileInput" class="icon-btn">📎</label>
+                    <input type="file" id="fileInput" style="display:none" accept="image/*">
+                    <textarea id="messageInput" rows="1" placeholder="Type encrypted payload..."></textarea>
+                    <button id="sendBtn" class="icon-btn">➤</button>
                 </div>
             </div>
 
-            <div id="view-ai" class="view-container" style="padding: 40px;">
-                <h3>🤖 Sentinel Intelligence</h3>
-                <textarea id="aiPrompt" style="height: 100px;" placeholder="Ask AI..."></textarea>
-                <button id="askAi">GENERATE RESPONSE</button>
-                <div id="aiResponse" style="margin-top:20px; padding:20px; background:rgba(0,0,0,0.5); border: 1px solid var(--blue);"></div>
+            <div id="view-ai" class="view-container">
+                <div class="generic-card">
+                    <h2 style="color: var(--neon); border-bottom: 1px solid var(--border); padding-bottom: 10px;">🤖 LOCAL SENTINEL</h2>
+                    <p style="font-size: 12px; color: #7f91a4; margin-top: 10px;">Hardware-isolated neural logic.</p>
+                    <textarea id="aiPrompt" rows="3" style="width:100%; padding:15px; margin-top:20px; border-radius:8px; background:#000; color:white; border:1px solid var(--border); outline:none;" placeholder="Command query..."></textarea>
+                    <button id="askAiBtn" style="width: 100%; padding: 15px; background: var(--neon); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px;">EXECUTE</button>
+                    <div id="aiAnswer" style="margin-top:20px; padding:15px; background:rgba(0,255,162,0.05); border-left: 3px solid var(--neon); display:none; font-family: monospace; font-size: 13px;"></div>
+                </div>
             </div>
 
-            <div id="view-settings" class="view-container" style="padding: 40px;">
-                <h3>⚙️ Profile Node Settings</h3>
-                <div id="user-info" style="margin-bottom: 20px;"></div>
-                <button id="logoutBtn" style="background: #ff3333;">DISCONNECT (LOGOUT)</button>
+            <div id="view-settings" class="view-container">
+                <div class="generic-card">
+                    <h2 style="color: var(--neon); border-bottom: 1px solid var(--border); padding-bottom: 10px;">⚙️ NODE CONFIG</h2>
+                    <p style="margin: 20px 0;"><strong>Active ID:</strong> <span id="profileEmail" style="color: #00e5ff;"></span></p>
+                    <p style="margin: 20px 0; font-size: 12px; color: #7f91a4;">Security: Double Ratchet + WebAuthn Active</p>
+                    <button id="logoutBtn" style="width: 100%; padding: 15px; background: #ff3333; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">TERMINATE SESSION</button>
+                </div>
             </div>
+
         </div>
     </div>
 
