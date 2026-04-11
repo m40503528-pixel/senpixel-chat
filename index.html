@@ -3,140 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Senpixel Chat</title>
+    <title>Senpixel Messenger Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; background: #0f0f0f; color: #e0e0e0; }
-        #auth-container { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
-        #chat-container { display: none; flex-direction: column; flex: 1; overflow: hidden; }
-        #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .msg { background: #1e1e1e; padding: 12px 16px; border-radius: 12px; max-width: 85%; border-left: 4px solid #3ecf8e; align-self: flex-start; }
-        .msg.mine { align-self: flex-end; border-left: none; border-right: 4px solid #3ecf8e; background: #252525; }
-        .msg .user { font-size: 0.75rem; color: #3ecf8e; font-weight: bold; margin-bottom: 4px; }
-        #input-area { padding: 20px; display: flex; gap: 12px; background: #181818; border-top: 1px solid #282828; }
-        input { flex: 1; padding: 14px; border-radius: 8px; border: 1px solid #333; background: #252525; color: white; outline: none; }
-        button { padding: 10px 24px; cursor: pointer; border: none; border-radius: 8px; background: #3ecf8e; color: #000; font-weight: 700; }
-        .google-btn { background: #ffffff; color: #000; font-size: 1rem; padding: 12px 24px; display: flex; align-items: center; gap: 10px; border: none; border-radius: 8px; cursor: pointer; }
-        .header { padding: 15px 25px; background: #181818; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #282828; }
+        :root {
+            --primary: #3ecf8e;
+            --bg: #0b0e11;
+            --card: #151921;
+            --text: #e0e6ed;
+            --admin-color: #ffde59;
+        }
+
+        body, html { margin: 0; padding: 0; height: 100vh; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+
+        /* Анимации */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Layout */
+        #app { display: flex; height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { width: 80px; background: var(--card); border-right: 1px solid #282828; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 25px; }
+        .nav-item { font-size: 1.5rem; cursor: pointer; color: #555; transition: 0.3s; position: relative; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item:hover { color: var(--primary); }
+
+        /* Main Chat Area */
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+        
+        #auth-screen { position: absolute; inset: 0; background: var(--bg); z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+        
+        .header { padding: 15px 25px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #282828; }
+
+        #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: url('https://www.transparenttextures.com/patterns/dark-matter.png'); }
+        
+        /* Message Bubbles */
+        .msg { max-width: 70%; padding: 12px 16px; border-radius: 18px; position: relative; animation: fadeIn 0.3s ease; line-height: 1.4; }
+        .msg.received { align-self: flex-start; background: var(--card); border-bottom-left-radius: 4px; }
+        .msg.sent { align-self: flex-end; background: var(--primary); color: #000; border-bottom-right-radius: 4px; font-weight: 500; }
+        .msg.official { align-self: center; max-width: 90%; background: linear-gradient(135deg, #1e1e1e, #2d2d2d); border: 1px solid var(--admin-color); border-radius: 12px; text-align: center; color: var(--admin-color); }
+        
+        .msg .meta { font-size: 0.7rem; opacity: 0.6; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .admin-badge { color: var(--admin-color); font-weight: bold; margin-left: 5px; }
+
+        /* Input Area */
+        .input-bar { padding: 20px; background: var(--card); display: flex; gap: 15px; align-items: center; }
+        input { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid #333; background: #1c2128; color: white; outline: none; font-size: 1rem; }
+        .btn-round { width: 45px; height: 45px; border-radius: 50%; border: none; background: var(--primary); color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.2s; }
+        .btn-round:hover { transform: scale(1.1); box-shadow: 0 0 15px var(--primary); }
+
+        /* AI & Effects */
+        .ai-btn { background: #8e44ad; color: white; }
+        #secret-layer { display: none; position: fixed; inset: 0; background: rgba(0,255,0,0.1); pointer-events: none; z-index: 99; border: 2px solid #0f0; }
     </style>
 </head>
 <body>
 
-    <div id="auth-container">
-        <h1 style="letter-spacing: 2px;">SENPIXEL CHAT</h1>
-        <button class="google-btn" onclick="signInWithGoogle()">
-            <img src="https://www.google.com/favicon.ico" width="18" alt="G"> Войти через Google
-        </button>
-    </div>
+    <div id="secret-layer"></div>
 
-    <div id="chat-container">
-        <div class="header">
-            <span id="user-email" style="font-weight: 500; color: #3ecf8e;"></span>
-            <button onclick="signOut()" style="background: #ff4d4d; color: white; padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer;">Выйти</button>
+    <div id="app">
+        <div class="sidebar">
+            <div class="nav-item active" onclick="switchTab('all')" title="Общий чат"><i class="fa-solid fa-comments"></i></div>
+            <div class="nav-item" onclick="switchTab('official')" title="Официальный канал"><i class="fa-solid fa-bullhorn"></i></div>
+            <div class="nav-item ai-btn btn-round" onclick="callAI()" title="Senpixel AI"><i class="fa-solid fa-robot"></i></div>
         </div>
-        <div id="messages"></div>
-        <div id="input-area">
-            <input type="text" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()">ОТПРАВИТЬ</button>
+
+        <div class="main-content">
+            <div id="auth-screen">
+                <h1 style="color: var(--primary); letter-spacing: 5px;">SENPIXEL</h1>
+                <button onclick="signInWithGoogle()" style="padding: 15px 30px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 10px;">
+                    <img src="https://www.google.com/favicon.ico" width="18"> Войти через Google
+                </button>
+                <p id="auth-status" style="font-size: 0.8rem; opacity: 0.5;"></p>
+            </div>
+
+            <div class="header">
+                <h2 id="tab-title">Общий чат</h2>
+                <div id="user-info" style="font-size: 0.8rem;"></div>
+                <button onclick="signOut()" style="background: none; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 5px 12px; border-radius: 5px; cursor: pointer;">Выйти</button>
+            </div>
+
+            <div id="messages"></div>
+
+            <div class="input-bar" id="input-container">
+                <input type="text" id="msgInput" placeholder="Написать сообщение..." onkeypress="if(event.key==='Enter') send()">
+                <button class="btn-round" onclick="send()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Данные из твоих скриншотов
         const SUPABASE_URL = 'https://kwotdvdjxhpttuwhgjkh.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_i6HL03F98ZmxCKmAKQDaLQ_w6u7ep4d'; 
+        const SUPABASE_KEY = 'sb_publishable_i6HL03F98ZmxCKmAKQDaLQ_w6u7ep4d'; //
+        const ADMIN_EMAIL = 'm40503528@gmail.com'; // Твой официальный аккаунт
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        const authContainer = document.getElementById('auth-container');
-        const chatContainer = document.getElementById('chat-container');
-        const messagesDiv = document.getElementById('messages');
-        const userEmailSpan = document.getElementById('user-email');
-
-        let currentUser = null;
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let user = null;
+        let currentTab = 'all'; // 'all' или 'official'
 
         async function init() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                setupUser(session.user);
+            const { data } = await supabase.auth.getSession();
+            if (data.session) setupUser(data.session.user);
+        }
+
+        function setupUser(userData) {
+            user = userData;
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('user-info').innerText = user.email;
+            checkPermissions();
+            loadMessages();
+            subscribe();
+        }
+
+        function checkPermissions() {
+            const inputContainer = document.getElementById('input-container');
+            if (currentTab === 'official' && user.email !== ADMIN_EMAIL) {
+                inputContainer.style.visibility = 'hidden';
+            } else {
+                inputContainer.style.visibility = 'visible';
             }
         }
 
         async function signInWithGoogle() {
-            const { error } = await supabaseClient.auth.signInWithOAuth({
+            await supabase.auth.signInWithOAuth({
                 provider: 'google',
-                options: {
-                    // Твой URL из настроек Google Console
-                    redirectTo: 'https://m40503528-pixel.github.io/senpixel-chat/'
-                }
+                options: { redirectTo: 'https://m40503528-pixel.github.io/senpixel-chat/' } //
             });
-            if (error) console.error("Ошибка:", error.message);
         }
 
         async function signOut() {
-            await supabaseClient.auth.signOut();
+            await supabase.auth.signOut();
             window.location.reload();
         }
 
-        function setupUser(user) {
-            currentUser = user;
-            authContainer.style.display = 'none';
-            chatContainer.style.display = 'flex';
-            userEmailSpan.innerText = user.email;
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById('tab-title').innerText = tab === 'all' ? 'Общий чат' : '📢 Официальный канал';
+            checkPermissions();
             loadMessages();
-            subscribeToRealtime();
         }
 
         async function loadMessages() {
-            const { data, error } = await supabaseClient
-                .from('messages')
-                .select('*')
-                .order('created_at', { ascending: true });
+            const container = document.getElementById('messages');
+            container.innerHTML = '<p style="text-align:center; opacity:0.5;">Загрузка истории...</p>';
+
+            let query = supabase.from('messages').select('*').order('created_at', { ascending: true });
             
-            if (data) {
-                messagesDiv.innerHTML = '';
-                data.forEach(addMessageToUI);
+            // Фильтр для официального канала
+            if (currentTab === 'official') {
+                query = query.eq('is_official', true);
+            } else {
+                query = query.eq('is_official', false);
             }
+
+            const { data } = await query;
+            container.innerHTML = '';
+            if (data) data.forEach(renderMessage);
         }
 
-        function addMessageToUI(msg) {
+        function renderMessage(msg) {
+            const container = document.getElementById('messages');
             const div = document.createElement('div');
-            const isMine = msg.user_id === currentUser?.id;
-            div.className = `msg ${isMine ? 'mine' : ''}`;
-            div.innerHTML = `<div class="user">${msg.user_email || 'User'}</div><div>${msg.text}</div>`;
-            messagesDiv.appendChild(div);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            const isMine = msg.user_id === user.id;
+            const isAdmin = msg.user_email === ADMIN_EMAIL;
+
+            div.className = `msg ${msg.is_official ? 'official' : (isMine ? 'sent' : 'received')}`;
+            
+            div.innerHTML = `
+                <div class="meta">
+                    <span>${isAdmin ? '👑 ADMIN' : msg.user_email.split('@')[0]}</span>
+                    <span>${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+                <div>${msg.text}</div>
+            `;
+            
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
         }
 
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const val = input.value.trim();
-            if (!val || !currentUser) return;
+        async function send() {
+            const input = document.getElementById('msgInput');
+            const text = input.value.trim();
+            if (!text) return;
 
-            const { error } = await supabaseClient
-                .from('messages')
-                .insert([{ 
-                    text: val, 
-                    user_id: currentUser.id, 
-                    user_email: currentUser.email 
-                }]);
+            if (text.toLowerCase() === '/hack') { toggleSecret(); input.value = ''; return; }
 
-            if (error) console.error("Ошибка отправки:", error.message);
+            const { error } = await supabase.from('messages').insert([{
+                text: text,
+                user_id: user.id,
+                user_email: user.email,
+                is_official: currentTab === 'official' // Сообщение станет официальным только если ты в этой вкладке
+            }]);
+
+            if (error) alert("Ошибка: убедитесь, что вы настроили колонку is_official в БД!");
             input.value = '';
         }
 
-        function subscribeToRealtime() {
-            supabaseClient
-                .channel('public:messages')
+        function subscribe() {
+            supabase.channel('custom-all-channel')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    addMessageToUI(payload.new);
+                    const msg = payload.new;
+                    if ((currentTab === 'official' && msg.is_official) || (currentTab === 'all' && !msg.is_official)) {
+                        renderMessage(msg);
+                    }
                 })
                 .subscribe();
         }
 
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) setupUser(session.user);
-        });
+        // --- ФИШКИ ---
+
+        function callAI() {
+            const container = document.getElementById('messages');
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'msg received';
+            aiDiv.style.border = '1px solid #8e44ad';
+            aiDiv.innerHTML = `<div class="meta" style="color:#8e44ad">Senpixel AI</div><div>Привет! Я на связи. Пока я работаю в тестовом режиме, но скоро буду отвечать на все твои вопросы.</div>`;
+            container.appendChild(aiDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function toggleSecret() {
+            const layer = document.getElementById('secret-layer');
+            layer.style.display = layer.style.display === 'block' ? 'none' : 'block';
+            console.log("SECRET MODE TOGGLED");
+        }
 
         init();
     </script>
