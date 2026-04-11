@@ -2,154 +2,240 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Senpixel Messenger</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
-    <link rel="manifest" href="./manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senpixel Chat</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --bg-color: #0b0e11; --panel-bg: #1f2227; --accent: #ff3333; --text-main: #ffffff; --text-muted: #888888; }
-        body { margin: 0; background: var(--bg-color); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        #auth-container, #chat-container { display: none; flex-direction: column; height: 100%; padding: 20px; box-sizing: border-box; max-width: 600px; margin: 0 auto; width: 100%; }
-        h2 { text-align: center; font-size: 28px; margin-bottom: 5px; }
-        .subtitle { color: var(--text-muted); text-align: center; font-size: 14px; margin-bottom: 25px; }
-        input, button { padding: 15px; margin: 8px 0; border-radius: 12px; border: none; outline: none; font-size: 16px; font-family: inherit; }
-        input { background: var(--panel-bg); color: var(--text-main); border: 1px solid #2d3139; transition: border 0.3s; }
-        input:focus { border-color: var(--accent); }
-        button { background: var(--accent); color: white; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
-        .btn-outline { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
-        #success-msg { display: none; background: #1e3a29; color: #4ade80; padding: 15px; border-radius: 12px; text-align: center; margin-top: 15px; font-size: 14px; line-height: 1.5; border: 1px solid #2d5a3f; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .header { padding-bottom: 15px; border-bottom: 1px solid var(--panel-bg); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        #messages { flex: 1; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
-        .msg { background: var(--panel-bg); padding: 12px 16px; border-radius: 18px 18px 18px 4px; max-width: 80%; align-self: flex-start; line-height: 1.4; word-wrap: break-word; }
-        .my-msg { align-self: flex-end; background: var(--accent); border-radius: 18px 18px 4px 18px; }
-        .author { display: block; font-size: 11px; opacity: 0.6; margin-bottom: 4px; }
-        .input-area { display: flex; gap: 10px; background: var(--bg-color); padding-top: 10px; border-top: 1px solid var(--panel-bg); }
-        .input-area input { flex: 1; margin: 0; border-radius: 20px; padding: 15px 20px; }
-        .input-area button { margin: 0; border-radius: 50%; width: 50px; height: 50px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #0f0f0f; 
+            color: #e0e0e0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        
+        /* Контейнеры экранов */
+        #auth-container, #chat-container { 
+            display: none; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100%; 
+            padding: 20px; 
+        }
+
+        /* Поля ввода и кнопки */
+        input { 
+            padding: 14px; 
+            margin: 8px 0; 
+            border-radius: 10px; 
+            border: 1px solid #333; 
+            background: #1a1a1a; 
+            color: white; 
+            width: 100%; 
+            max-width: 320px; 
+        }
+        button { 
+            padding: 14px; 
+            margin: 8px 0; 
+            border-radius: 10px; 
+            border: none; 
+            background: #3ecf8e; 
+            color: #000; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 100%; 
+            max-width: 320px; 
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+
+        /* Кнопка Google */
+        .google-btn { 
+            background: white; 
+            color: #000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px; 
+        }
+
+        /* Чат */
+        #messages { 
+            flex: 1; 
+            overflow-y: auto; 
+            width: 100%; 
+            max-width: 700px; 
+            margin: 20px 0; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            padding: 10px;
+        }
+        .msg { 
+            background: #1e1e1e; 
+            padding: 12px 16px; 
+            border-radius: 15px; 
+            align-self: flex-start; 
+            max-width: 85%; 
+            word-wrap: break-word;
+        }
+        .my-msg { background: #3ecf8e; color: #000; align-self: flex-end; }
+        .user-email { font-size: 0.75em; opacity: 0.6; margin-bottom: 4px; font-weight: bold; }
+
+        .input-area { 
+            display: flex; 
+            gap: 10px; 
+            width: 100%; 
+            max-width: 700px; 
+            background: #1a1a1a; 
+            padding: 10px; 
+            border-radius: 15px; 
+            margin-bottom: 20px;
+        }
+        .input-area input { margin: 0; max-width: none; flex: 1; border: none; }
+        .input-area button { margin: 0; width: 80px; }
     </style>
 </head>
 <body>
 
     <div id="auth-container">
-        <h2>Senpixel Chat</h2>
-        <p class="subtitle">Введи почту и пароль для входа</p>
-        <input type="email" id="email" placeholder="Email">
+        <h1 style="color: #3ecf8e; margin-bottom: 30px;">Senpixel Chat</h1>
+        <input type="email" id="email" placeholder="Ваш Email">
         <input type="password" id="password" placeholder="Пароль">
-        <button onclick="handleAuth('signIn')">Войти</button>
-        <button class="btn-outline" onclick="handleAuth('signUp')">Создать аккаунт</button>
-        <div id="success-msg"></div>
+        <button onclick="handleAuth('login')">Войти</button>
+        <button onclick="handleAuth('signup')" style="background: #2b2b2b; color: #fff;">Создать аккаунт</button>
+        
+        <div style="margin: 20px 0; color: #555;">или</div>
+
+        <button class="google-btn" onclick="signInWithGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+            Войти через Google
+        </button>
     </div>
 
     <div id="chat-container">
-        <div class="header">
-            <span style="font-weight: bold; font-size: 18px;">Senpixel Messenger</span>
-            <button onclick="signOut()" style="padding: 6px 12px; font-size: 12px; border-radius: 8px; background: #2d3139;">Выйти</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 700px; border-bottom: 1px solid #333; padding: 10px;">
+            <div id="user-info" style="font-weight: bold; color: #3ecf8e;"></div>
+            <button onclick="logout()" style="width: auto; padding: 8px 15px; background: #ff4444; color: white; font-size: 0.8em;">Выйти</button>
         </div>
+
         <div id="messages"></div>
+
         <div class="input-area">
-            <input type="text" id="msgInput" placeholder="Сообщение..." onkeypress="if(event.key === 'Enter') sendMessage()">
-            <button onclick="sendMessage()">➜</button>
+            <input type="text" id="messageInput" placeholder="Напишите сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button onclick="sendMessage()">Отправить</button>
         </div>
     </div>
 
     <script>
-        // ТВОИ КЛЮЧИ ВСТАВЛЕНЫ:
-        const SB_URL = "https://kwotdvdjxhpttuwhgjkh.supabase.co";
-        const SB_KEY = "sb_publishable_i6HL03F98ZmxCKmAKQDaLQ_w6u7ep4d";
+        // ДАННЫЕ ТВОЕГО ПРОЕКТА
+        const SUPABASE_URL = "https://kwotdvdjxhpttuwhgjkh.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_i6HL03F98ZmxCKmAKQDaLQ_w6u7ep4d"; 
 
-        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const authCont = document.getElementById('auth-container');
-        const chatCont = document.getElementById('chat-container');
+        const authContainer = document.getElementById('auth-container');
+        const chatContainer = document.getElementById('chat-container');
         const messagesDiv = document.getElementById('messages');
-        const successMsg = document.getElementById('success-msg');
+        const msgInput = document.getElementById('messageInput');
 
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-            }[tag]));
+        // Проверка авторизации
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                authContainer.style.display = 'none';
+                chatContainer.style.display = 'flex';
+                document.getElementById('user-info').innerText = session.user.email;
+                loadMessages();
+                subscribeMessages();
+            } else {
+                authContainer.style.display = 'flex';
+                chatContainer.style.display = 'none';
+                messagesDiv.innerHTML = '';
+            }
+        });
+
+        // Вход через Google
+        async function signInWithGoogle() {
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + window.location.pathname
+                }
+            });
+            if (error) alert("Ошибка: " + error.message);
         }
 
+        // Обычная почта
         async function handleAuth(type) {
-            const email = document.getElementById('email').value.trim();
+            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            successMsg.style.display = 'none';
-            if (!email || !password) return alert('Пожалуйста, заполни все поля!');
+            if(!email || !password) return alert("Заполните поля!");
 
-            const { data, error } = type === 'signUp' 
+            let result = (type === 'signup') 
                 ? await supabaseClient.auth.signUp({ email, password })
                 : await supabaseClient.auth.signInWithPassword({ email, password });
 
-            if (error) {
-                alert(error.message);
-            } else {
-                if (type === 'signUp' && data.user && !data.session) {
-                    successMsg.innerHTML = "✅ Письмо отправлено!<br>Зайдите на почту и подтвердите свой аккаунт.<br><br>✅ Email sent!<br>Please check your inbox to confirm your account.";
-                    successMsg.style.display = 'block';
-                } else {
-                    checkUser();
-                }
-            }
+            if (result.error) alert(result.error.message);
+            else if (type === 'signup') alert("Проверьте почту (если не включен Google)!");
         }
 
-        async function signOut() {
-            await supabaseClient.auth.signOut();
-            location.reload();
-        }
+        async function logout() { await supabaseClient.auth.signOut(); }
 
-        async function checkUser() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            if (user) {
-                authCont.style.display = 'none';
-                chatCont.style.display = 'flex';
-                loadMessages();
-                supabaseClient.channel('public:messages').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    addMessageToUI(payload.new, user.email);
-                }).subscribe();
-            } else {
-                authCont.style.display = 'flex';
-            }
-        }
-
+        // Сообщения
         async function loadMessages() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            const { data } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true }).limit(50);
-            messagesDiv.innerHTML = '';
-            if (data) {
-                data.forEach(m => addMessageToUI(m, user.email));
-                setTimeout(() => messagesDiv.scrollTop = messagesDiv.scrollHeight, 100);
+            const { data, error } = await supabaseClient
+                .from('messages')
+                .select('*')
+                .order('created_at', { ascending: true });
+            
+            if (!error) {
+                messagesDiv.innerHTML = '';
+                data.forEach(renderMessage);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
             }
         }
 
-        function addMessageToUI(msg, currentEmail) {
+        async function renderMessage(msg) {
+            const { data } = await supabaseClient.auth.getUser();
+            const isMe = data.user && data.user.id === msg.user_id;
+            
             const div = document.createElement('div');
-            const isMy = msg.user_email === currentEmail;
-            div.className = isMy ? 'msg my-msg' : 'msg';
-            const safeText = escapeHTML(msg.content);
-            const authorText = msg.user_email.split('@')[0];
-            div.innerHTML = `<span class="author">${authorText}</span>${safeText}`;
+            div.className = `msg ${isMe ? 'my-msg' : ''}`;
+            div.innerHTML = `
+                <div class="user-email">${msg.email || 'Аноним'}</div>
+                <div>${msg.text}</div>
+            `;
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
         async function sendMessage() {
-            const input = document.getElementById('msgInput');
-            const text = input.value.trim();
+            const text = msgInput.value.trim();
+            if (!text) return;
+
             const { data: { user } } = await supabaseClient.auth.getUser();
-            if (text && user) {
-                input.value = '';
-                const { error } = await supabaseClient.from('messages').insert([{ content: text, user_email: user.email }]);
-                if (error) alert('Ошибка отправки. Проверьте настройки RLS в Supabase.');
-            }
+            const { error } = await supabaseClient.from('messages').insert([{ 
+                text: text, 
+                user_id: user.id,
+                email: user.email 
+            }]);
+
+            if (error) alert("Ошибка: " + error.message);
+            msgInput.value = '';
         }
 
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(err => console.log("SW error", err));
+        function subscribeMessages() {
+            supabaseClient
+                .channel('public:messages')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                    renderMessage(payload.new);
+                })
+                .subscribe();
         }
-
-        checkUser();
     </script>
 </body>
 </html>
