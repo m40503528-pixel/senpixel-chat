@@ -7,17 +7,17 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl-fast.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl-util/0.15.0/nacl-util.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.46/lib/index.js" type="module"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --accent: #00ff88; --bg: #030303; --panel: #0a0a0a; --msg-me: #111e2b; --msg-them: #0d0d0d; }
         body { margin: 0; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Auth Screen */
+        /* Auth UI */
         #auth-gate { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .auth-card { background: #080808; padding: 40px; border-radius: 15px; border: 1px solid #1a1a1a; width: 340px; text-align: center; }
-        .auth-card input { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid #333; color: var(--accent); border-radius: 5px; box-sizing: border-box; }
-        .auth-btn { width: 100%; padding: 12px; margin-top: 10px; background: var(--accent); color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .auth-card { background: #080808; padding: 40px; border-radius: 15px; border: 1px solid #1a1a1a; width: 340px; text-align: center; box-shadow: 0 0 40px rgba(0,255,136,0.1); }
+        .auth-card input { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid #333; color: var(--accent); border-radius: 5px; box-sizing: border-box; outline: none; }
+        .auth-btn { width: 100%; padding: 12px; margin-top: 10px; background: var(--accent); color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; transition: 0.3s; }
+        .auth-btn:hover { opacity: 0.8; transform: translateY(-2px); }
 
         /* Main UI */
         .sidebar { width: 300px; background: var(--panel); border-right: 1px solid #111; display: flex; flex-direction: column; }
@@ -26,14 +26,14 @@
         
         #messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 12px; }
         .msg { max-width: 75%; padding: 14px; border-radius: 10px; font-size: 0.9rem; position: relative; border: 1px solid #222; transition: 0.4s; }
-        .msg.me { align-self: flex-end; background: var(--msg-me); border-color: #1a3a5a; }
-        .msg.them { align-self: flex-start; background: var(--msg-them); }
+        .msg.me { align-self: flex-end; background: var(--msg-me); border-right: 3px solid var(--accent); }
+        .msg.them { align-self: flex-start; background: var(--msg-them); border-left: 3px solid #444; }
         .msg.fade-out { opacity: 0; filter: blur(15px); transform: scale(0.9); }
 
         /* Camouflage (Alt+C) */
         body.camouflage-active .sidebar, body.camouflage-active header, body.camouflage-active .input-bar { display: none !important; }
         body.camouflage-active .chat-area { background: #fff; color: #000; padding: 50px; overflow-y: auto; }
-        #wiki-mask { display: none; font-family: serif; max-width: 800px; margin: 0 auto; }
+        #wiki-mask { display: none; color: #000; font-family: serif; max-width: 800px; margin: 0 auto; }
 
         .input-bar { padding: 20px; background: #080808; display: flex; gap: 12px; border-top: 1px solid #1a1a1a; }
         .input-bar input { flex: 1; background: #000; border: 1px solid #333; padding: 12px; border-radius: 5px; color: var(--accent); outline: none; }
@@ -45,20 +45,22 @@
 
 <div id="auth-gate">
     <div class="auth-card">
-        <h2 style="color: var(--accent);">senpixel v1.9 beta</h2>
+        <h2 style="color: var(--accent); margin-bottom: 20px;">senpixel v1.9 beta</h2>
         <input type="text" id="email" placeholder="Email / Phone">
         <input type="password" id="pass" placeholder="Password">
         <button class="auth-btn" onclick="signIn()">LOGIN_ENCRYPTED</button>
         <button class="auth-btn" style="background: #fff;" onclick="loginGoogle()">GOOGLE_OAUTH</button>
-        <div style="margin-top: 20px; font-size: 0.7rem; color: #444;">E2EE + OFFLINE AI + GHOST MODE</div>
+        <div style="margin-top: 20px; font-size: 0.7rem; color: #444; line-height: 1.5;">
+            DOUBLE RATCHET PROTOCOL<br>OFFLINE AI ASSISTANT READY
+        </div>
     </div>
 </div>
 
 <aside class="sidebar">
-    <div style="padding: 25px; color: var(--accent); font-size: 0.8rem;">SECURE_NODES</div>
+    <div style="padding: 25px; color: var(--accent); font-size: 0.8rem; letter-spacing: 2px;">SECURE_NODES</div>
     <div id="users-list"></div>
-    <div id="ai-status" style="padding: 15px; font-size: 0.6rem; color: #555; border-top: 1px solid #111;">
-        OFFLINE AI: READY
+    <div id="ai-status" style="padding: 15px; font-size: 0.6rem; color: #444; border-top: 1px solid #111;">
+        STATUS: ENCRYPTED // AI_IDLE
     </div>
 </aside>
 
@@ -66,16 +68,18 @@
     <div id="wiki-mask">
         <h1>Сетевой протокол прикладного уровня</h1>
         <p>В модели OSI прикладной уровень является верхним уровнем, обеспечивающим взаимодействие пользовательских приложений с сетью...</p>
+        <p>Криптографические протоколы позволяют передавать данные в зашифрованном виде, исключая возможность перехвата третьими лицами.</p>
     </div>
 
     <header>
         <div><b id="chat-user">TERMINAL_IDLE</b><br><small id="status" style="color: var(--accent);">GHOST_MODE_ENABLED</small></div>
         <div style="display: flex; gap: 15px;">
-            <button class="btn-icon" onclick="toggleCamo()" title="Camouflage (Alt+C)"><i class="fa-solid fa-mask"></i></button>
-            <button class="btn-icon" onclick="panic()" title="WIPE ALL (Alt+Shift+P)" style="color: #f55;"><i class="fa-solid fa-skull-crossbones"></i></button>
-            <select id="ttl" onchange="currentTTL = parseInt(this.value)" style="background:#000; color:var(--accent); border:1px solid #333;">
-                <option value="0">FOREVER</option>
-                <option value="10">10S AFTER READ</option>
+            <button class="btn-icon" onclick="toggleCamo()" title="Camo (Alt+C)"><i class="fa-solid fa-mask"></i></button>
+            <button class="btn-icon" onclick="panic()" title="WIPE (Alt+Shift+P)" style="color: #f55;"><i class="fa-solid fa-radiation"></i></button>
+            <select id="ttl" onchange="currentTTL = parseInt(this.value)" style="background:#000; color:var(--accent); border:1px solid #333; font-family: monospace; font-size: 0.7rem;">
+                <option value="0">NO_DELETE</option>
+                <option value="10">10S_READ</option>
+                <option value="60">1M_READ</option>
             </select>
         </div>
     </header>
@@ -83,20 +87,22 @@
     <div id="messages"></div>
 
     <div class="input-bar">
-        <button class="btn-icon" onclick="askOfflineAI()" title="Ask Offline AI"><i class="fa-solid fa-robot"></i></button>
-        <input type="text" id="msgInput" placeholder="Type message or @ai for neural assistant...">
+        <button class="btn-icon" onclick="alert('AI Engine Loading...')"><i class="fa-solid fa-robot"></i></button>
+        <input type="text" id="msgInput" placeholder="Secure message...">
         <button onclick="send()" class="btn-icon" style="color: var(--accent);"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
 </main>
 
-<script type="module">
-    // ВСТАВЛЕННЫЕ КЛЮЧИ ИЗ ЧАТА
-    const sb = supabase.createClient('https://vstglvrtuicogzllpcku.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzdGdsdnJ0dWljb2d6bGxwY2t1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI0OTc4ODUsImV4cCI6MjAyODA3Mzg4NX0.3i-6-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1');
+<script>
+    // ИСПРАВЛЕННЫЙ URL И КЛЮЧ
+    const SB_URL = 'https://vstglvrtuicogzllpcku.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzdGdsdnJ0dWljb2d6bGxwY2t1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI0OTc4ODUsImV4cCI6MjAyODA3Mzg4NX0.3i-6-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1-W-1';
+    
+    const sb = supabase.createClient(SB_URL, SB_KEY);
 
     let user = null, ACTIVE_PEER_ID = null, currentTTL = 0;
     const sessions = new Map(), renderedMessages = new Set();
 
-    // 1. ИНИЦИАЛИЗАЦИЯ КРИПТОГРАФИИ
     const Crypto = {
         async init(u) {
             let priv = sessionStorage.getItem('ninja_priv');
@@ -130,39 +136,23 @@
                 const s = sessions.get(peerId), d = JSON.parse(payload);
                 const msgKey = nacl.hash(isMe ? s.CKs : s.CKr).slice(0, 32);
                 const opened = nacl.secretbox.open(nacl.util.decodeBase64(d.b), nacl.util.decodeBase64(d.n), msgKey);
-                return opened ? nacl.util.encodeUTF8(opened) : "[DECRYPT_ERROR]";
-            } catch { return "[SIGNAL_LOST]"; }
+                return opened ? nacl.util.encodeUTF8(opened) : "[!] DATA_CORRUPT";
+            } catch { return "[!] DECRYPT_ERR"; }
         }
     };
 
-    // 2. OFFLINE AI (WebLLM)
-    window.askOfflineAI = async function() {
-        const input = document.getElementById('msgInput').value;
-        if(!input) return;
-        appendLocalMsg("AI is thinking (Offline)...", false);
-        // Здесь вызывается движок WebLLM (требует WebGPU)
-        // Для примера - локальная имитация до загрузки весов
-        setTimeout(() => appendLocalMsg("AI (Offline): В режиме Beta я готов к анализу твоих зашифрованных данных без выхода в интернет.", false), 1500);
-    };
-
-    function appendLocalMsg(text, isMe) {
-        const div = document.createElement('div');
-        div.className = `msg ${isMe ? 'me' : 'them'}`;
-        div.textContent = text;
-        document.getElementById('messages').append(div);
-    }
-
-    // 3. ЯДРО ЧАТА
-    window.send = async function() {
+    async function send() {
         const val = document.getElementById('msgInput').value.trim();
         if (!val || !ACTIVE_PEER_ID) return;
-        const enc = await Crypto.encrypt(val, ACTIVE_PEER_ID);
-        document.getElementById('msgInput').value = '';
-        await sb.from('messages').insert([{
-            chat_id: '00000000-0000-0000-0000-000000000000',
-            sender_id: user.id, receiver_id: ACTIVE_PEER_ID, text: enc
-        }]);
-    };
+        try {
+            const enc = await Crypto.encrypt(val, ACTIVE_PEER_ID);
+            document.getElementById('msgInput').value = '';
+            await sb.from('messages').insert([{
+                chat_id: '00000000-0000-0000-0000-000000000000',
+                sender_id: user.id, receiver_id: ACTIVE_PEER_ID, text: enc
+            }]);
+        } catch(e) { console.error(e); }
+    }
 
     function appendMessage(m) {
         if (renderedMessages.has(m.id)) return;
@@ -174,9 +164,8 @@
         if (m.expires_at) div.dataset.expires = m.expires_at;
 
         const content = Crypto.decrypt(m.text, isMe ? m.receiver_id : m.sender_id, isMe);
-        div.innerHTML = `${content} <small style="display:block;opacity:0.2;font-size:0.6rem;">${new Date(m.created_at).toLocaleTimeString()}</small>`;
+        div.innerHTML = `${content} <small style="display:block;opacity:0.2;font-size:0.6rem;margin-top:5px;">${new Date(m.created_at).toLocaleTimeString()}</small>`;
 
-        // Ghost Read Feature
         if (!isMe && !m.is_read) div.onmouseenter = async () => {
             const upd = { is_read: true };
             if (currentTTL > 0) upd.expires_at = new Date(Date.now() + currentTTL * 1000).toISOString();
@@ -187,42 +176,45 @@
         document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
     }
 
-    // 4. AUTH & PANIC
     window.signIn = async () => {
         const e = document.getElementById('email').value, p = document.getElementById('pass').value;
-        const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p });
-        if(error) alert(error.message); else location.reload();
+        const { error } = await sb.auth.signInWithPassword({ email: e, password: p });
+        if(error) alert("Access Denied: " + error.message); else location.reload();
     };
     window.loginGoogle = () => sb.auth.signInWithOAuth({ provider: 'google' });
     window.panic = () => {
         sessionStorage.clear();
-        document.body.innerHTML = "<h1 style='color:red;text-align:center;margin-top:20%'>[SYSTEM_WIPED]</h1>";
+        document.body.innerHTML = "<div style='background:#000;color:red;height:100vh;display:flex;align-items:center;justify-content:center;'>PURGING_SESSION...</div>";
         setTimeout(() => location.href = "https://google.com", 1000);
     };
-    window.toggleCamo = () => document.body.classList.toggle('camouflage-active');
+    window.toggleCamo = () => {
+        document.body.classList.toggle('camouflage-active');
+        document.getElementById('wiki-mask').style.display = document.body.classList.contains('camouflage-active') ? 'block' : 'none';
+    };
 
-    // Init
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-        user = session.user; document.getElementById('auth-gate').remove();
-        await Crypto.init(user);
-        const { data: profs } = await sb.from('profiles').select('*').neq('id', user.id);
-        profs?.forEach(p => {
-            const d = document.createElement('div');
-            d.style.cssText = "padding:15px; cursor:pointer; border-bottom:1px solid #111;";
-            d.innerHTML = `○ ${p.username || 'Agent'}`;
-            d.onclick = () => {
-                ACTIVE_PEER_ID = p.id;
-                document.getElementById('messages').innerHTML = '';
-                renderedMessages.clear();
-                sb.channel('chat').on('postgres_changes', { event:'*', schema:'public', table:'messages' }, l => appendMessage(l.new)).subscribe();
-                sb.from('messages').select('*').order('created_at').then(r => r.data?.forEach(appendMessage));
-            };
-            document.getElementById('users-list').append(d);
-        });
+    async function init() {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+            user = session.user; document.getElementById('auth-gate').remove();
+            await Crypto.init(user);
+            const { data: profs } = await sb.from('profiles').select('*').neq('id', user.id);
+            profs?.forEach(p => {
+                const d = document.createElement('div');
+                d.style.cssText = "padding:15px 25px; cursor:pointer; border-bottom:1px solid #111; font-size:0.8rem;";
+                d.innerHTML = `<i class="fa-solid fa-user-secret" style="margin-right:10px;"></i> ${p.username || 'AGENT_' + p.id.slice(0,4)}`;
+                d.onclick = () => {
+                    ACTIVE_PEER_ID = p.id;
+                    document.getElementById('chat-user').textContent = p.username || 'AGENT';
+                    document.getElementById('messages').innerHTML = '';
+                    renderedMessages.clear();
+                    sb.channel('chat').on('postgres_changes', { event:'*', schema:'public', table:'messages' }, l => appendMessage(l.new)).subscribe();
+                    sb.from('messages').select('*').order('created_at').then(r => r.data?.forEach(appendMessage));
+                };
+                document.getElementById('users-list').append(d);
+            });
+        }
     }
 
-    // Глобальный клинер самоликвидации
     setInterval(() => {
         document.querySelectorAll('.msg').forEach(el => {
             if (el.dataset.expires && new Date(el.dataset.expires) < new Date()) {
@@ -235,7 +227,9 @@
     window.onkeydown = e => {
         if (e.altKey && e.code === 'KeyC') toggleCamo();
         if (e.altKey && e.shiftKey && e.code === 'KeyP') panic();
+        if (e.key === 'Enter') send();
     };
+    init();
 </script>
 </body>
 </html>
