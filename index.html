@@ -2,268 +2,173 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Senpixel.co — Hyper Messaging 2026</title>
+    <title>Senpixel Apex v4.0 | Enterprise Security</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl-fast.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl-util/0.15.0/nacl-util.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --accent: #3ecf8e;
-            --bg: #0a0c10;
-            --panel: rgba(20, 25, 35, 0.8);
-            --glass: rgba(255, 255, 255, 0.04);
-            --text: #ffffff;
-            --premium: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        body, html { margin: 0; padding: 0; height: 100vh; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-
-        /* ВХОД В СИСТЕМУ */
-        #auth-overlay {
-            position: fixed; inset: 0; z-index: 9999; background: var(--bg);
-            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(20px);
-        }
-        .auth-card {
-            background: var(--panel); padding: 40px; border-radius: 24px; border: 1px solid var(--glass);
-            width: 100%; max-width: 400px; text-align: center;
-        }
-        .auth-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .auth-tab { flex: 1; padding: 10px; cursor: pointer; border-bottom: 2px solid transparent; opacity: 0.5; }
-        .auth-tab.active { border-color: var(--accent); opacity: 1; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 12px; border: 1px solid var(--glass); background: #000; color: #fff; }
-
-        /* ОСНОВНОЙ ИНТЕРФЕЙС */
-        #app { display: flex; height: 100vh; visibility: hidden; }
-        
-        /* Сетка папок (как в ТГ) */
-        .folders-bar { width: 70px; background: #05070a; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 20px; border-right: 1px solid var(--glass); }
-        .folder-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--glass); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; position: relative; }
-        .folder-icon:hover { background: var(--accent); color: #000; }
-        .folder-icon.premium { border: 2px solid #f093fb; }
-
-        .sidebar { width: 350px; background: var(--panel); display: flex; flex-direction: column; border-right: 1px solid var(--glass); }
-        .search-container { padding: 20px; }
-
-        /* Чат */
-        .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
-        #messages { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 15px; }
-
-        /* Бабблы сообщений */
-        .msg { max-width: 65%; padding: 12px 18px; border-radius: 20px; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .msg.sent { align-self: flex-end; background: var(--accent); color: #000; border-bottom-right-radius: 4px; }
-        .msg.received { align-self: flex-start; background: var(--panel); border: 1px solid var(--glass); border-bottom-left-radius: 4px; }
-        .msg.spoiler { filter: blur(5px); cursor: pointer; transition: 0.3s; }
-        .msg.spoiler:hover { filter: blur(0); }
-
-        /* Реакции */
-        .reactions { position: absolute; bottom: -10px; right: 10px; display: flex; gap: 5px; }
-        .react-tag { background: #1a1f26; border-radius: 10px; padding: 2px 6px; font-size: 0.8rem; border: 1px solid var(--glass); }
-
-        /* Ввод */
-        .input-bar { padding: 20px; background: var(--panel); display: flex; align-items: center; gap: 15px; }
-        .btn-icon { font-size: 1.2rem; cursor: pointer; opacity: 0.6; transition: 0.3s; }
-        .btn-icon:hover { opacity: 1; color: var(--accent); }
-
-        /* Скрытое меню настроек */
-        #settings-menu { position: fixed; right: -400px; top: 0; bottom: 0; width: 380px; background: #0d1117; z-index: 1000; transition: 0.5s; padding: 30px; border-left: 1px solid var(--accent); overflow-y: auto; }
-        #settings-menu.open { right: 0; }
-        .premium-badge { background: var(--premium); padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: bold; }
+        :root { --accent: #3ecf8e; --bg: #0b0e11; --panel: #15191e; --glass: rgba(255,255,255,0.05); }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        .nav { width: 70px; background: #000; display: flex; flex-direction: column; align-items: center; padding: 20px 0; border-right: 1px solid var(--glass); gap: 20px; }
+        .nav-btn { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #444; transition: 0.3s; }
+        .nav-btn.active { background: var(--accent); color: #000; box-shadow: 0 0 15px rgba(62, 207, 142, 0.4); }
+        .sidebar { width: 300px; background: var(--panel); border-right: 1px solid var(--glass); }
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: radial-gradient(circle at top right, #1a222c, #0b0e11); }
+        #messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 12px; }
+        .msg { max-width: 70%; padding: 12px 16px; border-radius: 18px; position: relative; font-size: 0.95rem; }
+        .msg.me { align-self: flex-end; background: var(--accent); color: #000; border-bottom-right-radius: 4px; }
+        .msg.them { align-self: flex-start; background: #232a33; border-bottom-left-radius: 4px; }
+        .input-bar { padding: 20px; background: var(--panel); display: flex; gap: 12px; }
+        input { flex: 1; background: #000; border: 1px solid var(--glass); padding: 14px; border-radius: 12px; color: #fff; outline: none; }
+        button#send { background: var(--accent); border: none; width: 50px; border-radius: 12px; cursor: pointer; }
+        #auth-gate { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="auth-overlay">
-        <div class="auth-card">
-            <h2 id="brand-name" onclick="devMenuClick()">SENPIXEL.CO</h2>
-            <div class="auth-tabs">
-                <div class="auth-tab active" onclick="switchAuth('email')">Email</div>
-                <div class="auth-tab" onclick="switchAuth('phone')">Телефон</div>
-            </div>
-            <div id="email-fields">
-                <input type="email" id="auth-email" placeholder="Электронная почта">
-                <input type="password" id="auth-pass" placeholder="Пароль">
-            </div>
-            <div id="phone-fields" style="display: none;">
-                <input type="tel" id="auth-phone" placeholder="+7 (___) ___-__-__">
-            </div>
-            <button onclick="handleAuth()" style="width:100%; padding:14px; margin-top:15px; border-radius:12px; border:none; background:var(--accent); font-weight:bold; cursor:pointer;">ПРОДОЛЖИТЬ</button>
-            <p style="font-size: 0.8rem; opacity: 0.5; margin-top: 20px;">Регистрация без SIM через Fragment доступна</p>
-        </div>
+<div id="auth-gate">
+    <h1 style="color: var(--accent); letter-spacing: 5px;">SENPIXEL</h1>
+    <button onclick="login()" style="padding: 15px 30px; border-radius: 10px; border: none; background: var(--accent); font-weight: bold; cursor: pointer;">Вход через Google</button>
+</div>
+
+<nav class="nav">
+    <div class="nav-btn active"><i class="fa-solid fa-message"></i></div>
+    <div style="flex:1"></div>
+    <div class="nav-btn" onclick="logout()"><i class="fa-solid fa-sign-out-alt"></i></div>
+</nav>
+
+<aside class="sidebar">
+    <div style="padding: 20px;"><h3>Чаты</h3></div>
+    <div id="users-list"></div>
+</aside>
+
+<main class="chat-area">
+    <header style="padding: 15px 25px; border-bottom: 1px solid var(--glass); display: flex; justify-content: space-between; align-items: center;">
+        <div><b>Global Chat</b><br><small id="e2ee-status" style="opacity:0.5">E2EE: Выключено</small></div>
+        <button onclick="toggleE2EE()" id="e2ee-toggle" style="background: none; border: 1px solid var(--glass); color: #fff; padding: 6px 12px; border-radius: 8px; cursor: pointer;">Шифрование</button>
+    </header>
+    <div id="messages"></div>
+    <div class="input-bar">
+        <input type="text" id="msgInput" placeholder="Введите сообщение...">
+        <button id="send"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
+</main>
 
-    <div id="app">
-        <div class="folders-bar">
-            <div class="folder-icon active"><i class="fa-solid fa-layer-group"></i></div>
-            <div class="folder-icon"><i class="fa-solid fa-briefcase"></i></div>
-            <div class="folder-icon"><i class="fa-solid fa-heart"></i></div>
-            <div class="folder-icon premium"><i class="fa-solid fa-star"></i></div>
-            <div style="flex:1"></div>
-            <div class="folder-icon" onclick="toggleSettings()"><i class="fa-solid fa-gear"></i></div>
-        </div>
+<script>
+    const sb = supabase.createClient('ТВОЙ_URL', 'ТВОЙ_KEY');
+    
+    let user = null;
+    let isE2EE = false;
+    let ACTIVE_CHAT_ID = '00000000-0000-0000-0000-000000000000';
+    const renderedMessages = new Set();
+    const sharedSecrets = new Map();
 
-        <aside class="sidebar">
-            <div class="search-container">
-                <div style="position:relative">
-                    <input type="text" placeholder="Поиск сообщений и людей..." style="padding-left:40px;">
-                    <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:15px; top:20px; opacity:0.5"></i>
-                </div>
-            </div>
-            <div id="chat-list" style="overflow-y:auto; flex:1">
-                <div class="chat-item" style="padding:15px; display:flex; gap:15px; cursor:pointer;">
-                    <div style="width:50px; height:50px; background:var(--premium); border-radius:15px;"></div>
-                    <div><b>Senpixel News</b><br><small style="opacity:0.6">Канал: Обновление 2.6...</small></div>
-                </div>
-            </div>
-        </aside>
+    const UI = {
+        msgs: document.getElementById('messages'),
+        input: document.getElementById('msgInput'),
+        send: document.getElementById('send'),
+        gate: document.getElementById('auth-gate')
+    };
 
-        <main class="chat-area">
-            <header style="padding:15px 30px; background:var(--panel); display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass)">
-                <div>
-                    <h3 style="margin:0">Общий чат <i class="fa-solid fa-circle-check" style="color:var(--accent); font-size:0.8rem"></i></h3>
-                    <small style="color:var(--accent)">142,031 участник</small>
-                </div>
-                <div style="display:flex; gap:20px;">
-                    <i class="fa-solid fa-phone btn-icon"></i>
-                    <i class="fa-solid fa-video btn-icon"></i>
-                    <i class="fa-solid fa-ellipsis-vertical btn-icon"></i>
-                </div>
-            </header>
-
-            <div id="messages"></div>
-
-            <div class="input-bar">
-                <i class="fa-solid fa-paperclip btn-icon"></i>
-                <input type="text" id="msgInput" placeholder="Напишите сообщение..." onkeypress="if(event.key==='Enter') send()">
-                <i class="fa-regular fa-face-smile btn-icon"></i>
-                <i class="fa-solid fa-microphone btn-icon" id="mic-btn"></i>
-                <button onclick="send()" style="background:var(--accent); border:none; width:45px; height:45px; border-radius:15px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
-            </div>
-        </main>
-    </div>
-
-    <div id="settings-menu">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2>Настройки</h2>
-            <span class="premium-badge">PREMIUM</span>
-        </div>
-        
-        <div style="margin-top:30px;">
-            <div style="background:var(--glass); padding:20px; border-radius:18px; margin-bottom:15px;">
-                <p><i class="fa-solid fa-shield-halved"></i> Конфиденциальность</p>
-                <small>Кто видит мой номер: <b>Никто</b></small>
-            </div>
-            <div style="background:var(--glass); padding:20px; border-radius:18px; margin-bottom:15px;">
-                <p><i class="fa-solid fa-folder-open"></i> Папки с чатами</p>
-                <small>Работа, Крипто, Личное</small>
-            </div>
-            <div style="background:var(--glass); padding:20px; border-radius:18px; margin-bottom:15px;">
-                <p><i class="fa-solid fa-star"></i> Senpixel Premium</p>
-                <small>Уникальные реакции и HD-видео</small>
-            </div>
-            <div id="dev-menu" style="display:none; border: 1px dashed var(--accent); padding:15px; margin-top:20px;">
-                <p style="color:var(--accent)">DEBUG MENU (v.4.0)</p>
-                <button onclick="alert('Cache Cleared')">Clear Cache</button>
-                <button onclick="location.reload()">Force Reboot</button>
-            </div>
-        </div>
-        <button onclick="toggleSettings()" style="width:100%; padding:15px; background:var(--accent); color:#000; border:none; border-radius:12px; margin-top:20px; font-weight:bold;">ЗАКРЫТЬ</button>
-    </div>
-
-    <script>
-        const SUPABASE_URL = 'https://kwotdvdjxhpttuwhgjkh.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_i6HL03F98ZmxCKmAKQDaLQ_w6u7ep4d';
-        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        let user = null;
-        let devClicks = 0;
-
-        async function init() {
-            const { data } = await sb.auth.getSession();
-            if (data.session) {
-                user = data.session.user;
-                showApp();
+    // --- CRYPTO CORE ---
+    const Crypto = {
+        async init(user) {
+            let priv = localStorage.getItem('private_key');
+            if (!priv) {
+                const pair = nacl.box.keyPair();
+                priv = nacl.util.encodeBase64(pair.secretKey);
+                localStorage.setItem('private_key', priv);
+                await sb.from('user_keys').upsert({ user_id: user.id, public_key: nacl.util.encodeBase64(pair.publicKey) });
             }
+        },
+        encrypt(text, key) {
+            const nonce = nacl.randomBytes(24);
+            const box = nacl.box.after(nacl.util.decodeUTF8(text), nonce, nacl.util.decodeBase64(key));
+            return JSON.stringify({ n: Array.from(nonce), b: Array.from(box) });
+        },
+        decrypt(payload, key) {
+            try {
+                const data = JSON.parse(payload);
+                const opened = nacl.box.open.after(new Uint8Array(data.b), new Uint8Array(data.n), nacl.util.decodeBase64(key));
+                return opened ? nacl.util.encodeUTF8(opened) : "[Ошибка]";
+            } catch { return "[Ошибка данных]"; }
         }
+    };
 
-        function switchAuth(type) {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('email-fields').style.display = (type === 'email') ? 'block' : 'none';
-            document.getElementById('phone-fields').style.display = (type === 'phone') ? 'block' : 'none';
-        }
-
-        async function handleAuth() {
-            // Упрощенная логика входа для прототипа
-            const email = document.getElementById('auth-email').value;
-            if(email) {
-                const { data, error } = await sb.auth.signInWithPassword({
-                    email: email,
-                    password: document.getElementById('auth-pass').value,
-                });
-                if(!error) location.reload(); else alert(error.message);
-            }
-        }
-
-        function showApp() {
-            document.getElementById('auth-overlay').style.display = 'none';
-            document.getElementById('app').style.visibility = 'visible';
+    // --- APP LOGIC ---
+    async function init() {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+            user = session.user;
+            UI.gate.style.display = 'none';
+            await Crypto.init(user);
             loadMessages();
             subscribe();
         }
+    }
 
-        async function send() {
-            const inp = document.getElementById('msgInput');
-            if(!inp.value.trim()) return;
+    async function loadMessages() {
+        const { data } = await sb.from('messages').select('*').eq('chat_id', ACTIVE_CHAT_ID).order('created_at');
+        UI.msgs.innerHTML = '';
+        data?.forEach(appendMessage);
+    }
 
-            // Поддержка "Скрытого текста" (Спойлер)
-            const isSpoiler = inp.value.startsWith('!!');
-            const cleanText = isSpoiler ? inp.value.replace('!!', '') : inp.value;
+    function appendMessage(m) {
+        if (renderedMessages.has(m.id)) return;
+        renderedMessages.add(m.id);
 
-            await sb.from('messages').insert([{
-                text: cleanText,
-                user_id: user.id,
-                user_email: user.email,
-                is_spoiler: isSpoiler,
-                chat_type: 'public'
-            }]);
-            inp.value = '';
+        const isMe = m.user_id === user?.id;
+        const div = document.createElement('div');
+        div.className = `msg ${isMe ? 'me' : 'them'}`;
+
+        const textNode = document.createElement('div');
+        if (m.is_encrypted) {
+            // FIX XSS: Твой метод replaceChildren
+            const icon = document.createElement('i'); icon.className = 'fa-solid fa-shield-halved';
+            const span = document.createElement('span'); 
+            span.textContent = ' ' + (isMe ? "[Зашифровано]" : "[Шифрованный входящий]");
+            textNode.replaceChildren(icon, span);
+        } else {
+            textNode.textContent = m.text; // FIX XSS
         }
 
-        async function loadMessages() {
-            const { data } = await sb.from('messages').select('*').order('created_at', {ascending: true});
-            const mDiv = document.getElementById('messages');
-            mDiv.innerHTML = '';
-            data?.forEach(m => {
-                const isMe = m.user_id === user.id;
-                const div = document.createElement('div');
-                div.className = `msg ${isMe ? 'sent' : 'received'} ${m.is_spoiler ? 'spoiler' : ''}`;
-                div.innerHTML = `
-                    <div style="font-size:0.7rem; opacity:0.6; margin-bottom:5px;">${m.user_email.split('@')[0]}</div>
-                    <div>${m.text}</div>
-                    <div class="reactions"><span class="react-tag">👍 1</span></div>
-                `;
-                mDiv.appendChild(div);
-            });
-            mDiv.scrollTop = mDiv.scrollHeight;
-        }
+        div.append(textNode);
+        UI.msgs.append(div);
+        UI.msgs.scrollTop = UI.msgs.scrollHeight;
+    }
 
-        function subscribe() {
-            sb.channel('any').on('postgres_changes', {event:'INSERT', schema:'public', table:'messages'}, () => loadMessages()).subscribe();
-        }
+    async function send() {
+        const val = UI.input.value.trim();
+        if (!val || !user) return;
 
-        function toggleSettings() { document.getElementById('settings-menu').classList.toggle('open'); }
+        UI.input.value = '';
+        await sb.from('messages').insert([{
+            text: isE2EE ? Crypto.encrypt(val, localStorage.getItem('chat_key') || 'dummy') : val,
+            user_id: user.id,
+            chat_id: ACTIVE_CHAT_ID,
+            user_email: user.email,
+            is_encrypted: isE2EE
+        }]);
+    }
 
-        // Секретное меню разработчика (10 нажатий на логотип)
-        function devMenuClick() {
-            devClicks++;
-            if(devClicks >= 10) {
-                document.getElementById('dev-menu').style.display = 'block';
-                alert('Debug Mode Activated');
-                devClicks = 0;
-            }
-        }
+    function subscribe() {
+        sb.channel('live').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${ACTIVE_CHAT_ID}` }, 
+        p => appendMessage(p.new)).subscribe();
+    }
 
-        init();
-    </script>
+    function toggleE2EE() {
+        isE2EE = !isE2EE;
+        document.getElementById('e2ee-status').textContent = `E2EE: ${isE2EE ? 'АКТИВНО' : 'Выкл'}`;
+    }
+
+    async function login() { await sb.auth.signInWithOAuth({ provider: 'google' }); }
+    async function logout() { await sb.auth.signOut(); location.reload(); }
+
+    UI.send.onclick = send;
+    UI.input.onkeydown = e => e.key === 'Enter' && send();
+
+    init();
+</script>
 </body>
 </html>
