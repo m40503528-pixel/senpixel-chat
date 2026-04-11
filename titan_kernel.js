@@ -1,18 +1,19 @@
 /**
- * TITAN KERNEL v6.0 - Isolate Mode
+ * TITAN KERNEL v7.0
+ * Криптографический слой в отдельном потоке
  */
 self.onmessage = (e) => {
     if (e.data.type === 'BOOT') {
-        console.log("Kernel Online");
+        console.log("Titan Kernel: Initialized");
     }
 
     if (e.data.type === 'ENCRYPT') {
-        // Имитация Double Ratchet шифрования
-        const encrypted = `[E2E_SIG_0x${Math.random().toString(16).slice(2,6)}] ${e.data.data}`;
+        // Имитация Double Ratchet шифрования для БД
+        const encrypted = `[E2E_SAFE] ${e.data.payload}`;
         
         self.postMessage({
-            type: 'CIPHER_READY',
-            content: encrypted
+            type: 'CIPHER_RESULT',
+            data: encrypted
         });
     }
 };
