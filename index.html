@@ -16,7 +16,7 @@
         #input-area { padding: 20px; display: flex; gap: 12px; background: #181818; border-top: 1px solid #282828; }
         input { flex: 1; padding: 14px; border-radius: 8px; border: 1px solid #333; background: #252525; color: white; outline: none; }
         button { padding: 10px 24px; cursor: pointer; border: none; border-radius: 8px; background: #3ecf8e; color: #000; font-weight: 700; }
-        .google-btn { background: #ffffff; color: #000; font-size: 1rem; padding: 12px 24px; display: flex; align-items: center; gap: 10px; }
+        .google-btn { background: #ffffff; color: #000; font-size: 1rem; padding: 12px 24px; display: flex; align-items: center; gap: 10px; border: none; border-radius: 8px; cursor: pointer; }
         .header { padding: 15px 25px; background: #181818; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #282828; }
     </style>
 </head>
@@ -32,17 +32,17 @@
     <div id="chat-container">
         <div class="header">
             <span id="user-email" style="font-weight: 500; color: #3ecf8e;"></span>
-            <button onclick="signOut()" style="background: #ff4d4d; color: white; padding: 6px 12px; border-radius: 5px;">Выйти</button>
+            <button onclick="signOut()" style="background: #ff4d4d; color: white; padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer;">Выйти</button>
         </div>
         <div id="messages"></div>
         <div id="input-area">
-            <input type="text" id="messageInput" placeholder="Введите сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <input type="text" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button onclick="sendMessage()">ОТПРАВИТЬ</button>
         </div>
     </div>
 
     <script>
-        // --- КОНФИГУРАЦИЯ ---
+        // Данные из твоих скриншотов
         const SUPABASE_URL = 'https://kwotdvdjxhpttuwhgjkh.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_i6HL03F98ZmxCKmAKQDaLQ_w6u7ep4d'; 
 
@@ -55,7 +55,6 @@
 
         let currentUser = null;
 
-        // Инициализация сессии
         async function init() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
@@ -67,10 +66,11 @@
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
+                    // Твой URL из настроек Google Console
                     redirectTo: 'https://m40503528-pixel.github.io/senpixel-chat/'
                 }
             });
-            if (error) console.error("Ошибка входа:", error.message);
+            if (error) console.error("Ошибка:", error.message);
         }
 
         async function signOut() {
@@ -101,7 +101,6 @@
 
         function addMessageToUI(msg) {
             const div = document.createElement('div');
-            // Если сообщение от текущего пользователя - добавим класс mine
             const isMine = msg.user_id === currentUser?.id;
             div.className = `msg ${isMine ? 'mine' : ''}`;
             div.innerHTML = `<div class="user">${msg.user_email || 'User'}</div><div>${msg.text}</div>`;
@@ -122,24 +121,21 @@
                     user_email: currentUser.email 
                 }]);
 
-            if (error) console.error("Ошибка базы данных:", error.message);
+            if (error) console.error("Ошибка отправки:", error.message);
             input.value = '';
         }
 
         function subscribeToRealtime() {
             supabaseClient
-                .channel('messages-realtime')
+                .channel('public:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     addMessageToUI(payload.new);
                 })
                 .subscribe();
         }
 
-        // Слушатель изменения состояния авторизации
         supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
-                setupUser(session.user);
-            }
+            if (event === 'SIGNED_IN' && session) setupUser(session.user);
         });
 
         init();
