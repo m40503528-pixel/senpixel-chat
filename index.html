@@ -3,89 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Senpixel Nexus // Evolution 6.0</title>
+    <title>Senpixel Nexus // Professional Edition</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        :root { --n: #00ffa2; --b: #00e5ff; --bg: #030508; --g: rgba(0, 255, 162, 0.15); }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        
-        body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; display: flex; }
-        
-        /* Background Эффект: Нейронная сетка */
-        .bg-grid {
-            position: fixed; inset: 0; z-index: -1;
-            background-image: linear-gradient(var(--g) 1px, transparent 1px), linear-gradient(90deg, var(--g) 1px, transparent 1px);
-            background-size: 50px 50px; animation: move 20s linear infinite; opacity: 0.3;
+        :root { 
+            --neon: #00ffa2; --blue: #00e5ff; --bg: #0a0c10; 
+            --glass: rgba(16, 20, 28, 0.95); --border: rgba(0, 255, 162, 0.15); 
         }
-        @keyframes move { from { background-position: 0 0; } to { background-position: 50px 50px; } }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
 
-        /* Auth */
-        #gate { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 1s; }
-        .card { background: rgba(10,15,25,0.9); padding: 40px; border: 1px solid var(--n); border-radius: 20px; text-align: center; width: 340px; backdrop-filter: blur(20px); }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid var(--g); color: #fff; border-radius: 8px; outline: none; }
-        button { width: 100%; padding: 12px; background: var(--n); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        body { background: var(--bg); color: #e1e4e8; height: 100vh; display: flex; overflow: hidden; }
 
-        /* Main App */
-        #nexus { display: none; width: 100%; height: 100%; flex-direction: row; }
-        .side { width: 80px; background: rgba(0,0,0,0.8); border-right: 1px solid var(--g); display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
-        .nav-ico { font-size: 24px; margin-bottom: 30px; cursor: pointer; opacity: 0.5; transition: 0.3s; }
-        .nav-ico.active { opacity: 1; color: var(--n); filter: drop-shadow(0 0 5px var(--n)); }
+        /* Auth Gate */
+        #gate { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
+        .auth-card { background: var(--glass); padding: 40px; border: 1px solid var(--border); border-radius: 12px; width: 360px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 8px 0; background: #050608; border: 1px solid var(--border); color: #fff; border-radius: 6px; outline: none; }
+        .btn-prime { width: 100%; padding: 12px; background: var(--neon); color: #000; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-top: 10px; }
 
-        .view-port { flex: 1; display: flex; flex-direction: column; background: rgba(5,8,15,0.6); }
-        .screen { display: none; flex: 1; flex-direction: column; padding: 20px; }
-        .screen.active { display: flex; }
+        /* Layout */
+        #app { display: none; width: 100%; height: 100%; flex-direction: row; }
+        
+        .nav-bar { width: 72px; background: #0d1117; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 25px; }
+        .nav-item { font-size: 20px; cursor: pointer; opacity: 0.4; transition: 0.2s; }
+        .nav-item.active { opacity: 1; color: var(--neon); }
 
-        /* Chat UI */
-        #msgs { flex: 1; overflow-y: auto; padding-right: 10px; display: flex; flex-direction: column; gap: 15px; }
-        .bubble { max-width: 75%; padding: 12px 18px; border-radius: 18px; position: relative; font-size: 14px; animation: pop 0.3s ease; }
-        @keyframes pop { from { transform: scale(0.9); opacity: 0; } }
-        .bubble.me { align-self: flex-end; background: var(--n); color: #000; border-bottom-right-radius: 2px; }
-        .bubble.not-me { align-self: flex-start; background: rgba(255,255,255,0.05); border: 1px solid var(--g); border-bottom-left-radius: 2px; }
+        .main-frame { flex: 1; display: flex; flex-direction: column; background: radial-gradient(circle at top right, #111827, #0a0c10); }
+        .top-bar { height: 48px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; font-family: monospace; font-size: 11px; color: var(--blue); }
 
-        .input-wrap { display: flex; gap: 10px; padding: 20px; background: rgba(0,0,0,0.4); border-top: 1px solid var(--g); }
-        textarea { flex: 1; background: #000; border: 1px solid var(--g); color: #fff; padding: 12px; border-radius: 10px; resize: none; outline: none; }
+        .view { display: none; flex: 1; flex-direction: column; padding: 24px; overflow: hidden; }
+        .view.active { display: flex; }
 
-        /* AI Monitor */
-        .ai-log { font-family: monospace; font-size: 12px; color: var(--b); background: #000; padding: 15px; border-radius: 10px; border: 1px solid var(--b); margin-top: 20px; }
+        /* Chat Components */
+        #chat-scroller { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 20px; }
+        .bubble { max-width: 70%; padding: 10px 16px; border-radius: 14px; font-size: 14px; line-height: 1.5; position: relative; }
+        .bubble.me { align-self: flex-end; background: var(--neon); color: #000; border-bottom-right-radius: 2px; }
+        .bubble.peer { align-self: flex-start; background: #1f2937; border: 1px solid var(--border); border-bottom-left-radius: 2px; }
+
+        .input-panel { padding: 20px; display: flex; gap: 12px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); }
+        textarea { flex: 1; background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; resize: none; outline: none; height: 44px; }
+
+        /* Evolution Console */
+        .console { background: #000; padding: 15px; border-radius: 8px; border: 1px solid var(--blue); font-family: 'Courier New', monospace; font-size: 12px; color: var(--blue); flex: 1; overflow-y: auto; }
     </style>
 </head>
 <body>
-    <div class="bg-grid"></div>
 
     <div id="gate">
-        <div class="card">
-            <h1 style="color:var(--n); letter-spacing: 5px;">NEXUS</h1>
-            <input type="email" id="u-email" placeholder="Email">
-            <input type="password" id="u-pass" placeholder="Password">
-            <button id="auth-btn">INITIALIZE</button>
-            <div id="auth-err" style="color:red; font-size:10px; margin-top:10px;"></div>
+        <div class="auth-card">
+            <h2 style="margin-bottom: 24px; letter-spacing: 2px;">SENPIXEL_CORE</h2>
+            <input type="email" id="auth-email" placeholder="Identity (Email)">
+            <input type="password" id="auth-pass" placeholder="Secret Key">
+            <button class="btn-prime" id="auth-exec">INITIALIZE SESSION</button>
+            <p id="auth-log" style="color: #ff4444; font-size: 10px; margin-top: 12px;"></p>
         </div>
     </div>
 
-    <div id="nexus">
-        <div class="side">
-            <div class="nav-ico active" data-s="s-chat">💬</div>
-            <div class="nav-ico" data-s="s-ai">🤖</div>
-            <div class="nav-ico" data-s="s-set">⚙️</div>
-        </div>
-        <div class="view-port">
-            <div id="s-chat" class="screen active">
-                <div id="msgs"></div>
-                <div class="input-wrap">
-                    <textarea id="minput" rows="1" placeholder="Type packet..."></textarea>
-                    <button id="send-btn" style="width: 80px;">SEND</button>
+    <div id="app">
+        <nav class="nav-bar">
+            <div class="nav-item active" data-tab="tab-chat">💬</div>
+            <div class="nav-item" data-tab="tab-ai">🤖</div>
+            <div class="nav-item" data-tab="tab-sys">⚙️</div>
+        </nav>
+
+        <main class="main-frame">
+            <header class="top-bar" id="sentinel-status">> SENTINEL_ENCLAVE: ACTIVE // NO_THREATS_DETECTED</header>
+
+            <section id="tab-chat" class="view active">
+                <div id="chat-scroller"></div>
+                <div class="input-panel">
+                    <textarea id="msg-input" placeholder="Secure transmission..."></textarea>
+                    <button class="btn-prime" id="msg-send" style="width: 80px; margin: 0;">SEND</button>
                 </div>
-            </div>
-            <div id="s-ai" class="screen">
-                <h2>AI Sentinel Node</h2>
-                <div class="ai-log" id="ailog">> Core Health: 100%<br>> Encryption: Double Ratchet Active</div>
-                <button id="heal-btn" style="margin-top: 10px;">SELF-REPAIR CODE</button>
-            </div>
-            <div id="s-set" class="screen">
-                <h2>System Config</h2>
-                <button id="out-btn" style="background:#ff3333; margin-top:20px;">DISCONNECT</button>
-            </div>
-        </div>
+            </section>
+
+            <section id="tab-ai" class="view">
+                <h3 style="margin-bottom: 15px;">AI Evolution Engine</h3>
+                <div class="console" id="ai-console">> Nexus Heuristics: Online...</div>
+                <button class="btn-prime" id="ai-patch" style="margin-top: 15px; background: var(--blue);">RUN DYNAMIC PATCHING</button>
+            </section>
+
+            <section id="tab-sys" class="view">
+                <h3 style="margin-bottom: 15px;">System Configuration</h3>
+                <div id="sys-info" style="font-size: 12px; margin-bottom: 20px;"></div>
+                <button class="btn-prime" id="sys-out" style="background: #ff4444;">TERMINATE ALL CONNECTIONS</button>
+            </section>
+        </main>
     </div>
 
     <script src="app.js"></script>
