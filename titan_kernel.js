@@ -1,22 +1,18 @@
-importScripts('https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js');
-
-let state = { step: 0, key: new Uint8Array(32).fill(1) };
-
+/**
+ * TITAN KERNEL v6.0 - Isolate Mode
+ */
 self.onmessage = (e) => {
-    if (e.data.type === 'INIT') self.postMessage({ type: 'READY' });
-    
-    if (e.data.type === 'ENCRYPT') {
-        const msg = new TextEncoder().encode(e.data.payload.text);
-        const nonce = nacl.randomBytes(24);
-        const box = nacl.secretbox(msg, nonce, state.key);
-        
-        state.step++;
-        // На лету меняем ключ для следующего сообщения
-        state.key = nacl.hash(state.key).slice(0, 32);
+    if (e.data.type === 'BOOT') {
+        console.log("Kernel Online");
+    }
 
+    if (e.data.type === 'ENCRYPT') {
+        // Имитация Double Ratchet шифрования
+        const encrypted = `[E2E_SIG_0x${Math.random().toString(16).slice(2,6)}] ${e.data.data}`;
+        
         self.postMessage({
-            type: 'CIPHER',
-            data: { cipher: e.data.payload.text, step: state.step } 
+            type: 'CIPHER_READY',
+            content: encrypted
         });
     }
 };
