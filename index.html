@@ -3,101 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Senpixel Nexus // Evolution 7.0</title>
+    <title>Senpixel Nexus // v7.0 Singularity</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         :root { 
-            --neon: #00ffa2; --blue: #00e5ff; --bg: #05070a; 
-            --glass: rgba(10, 15, 25, 0.95); --border: rgba(0, 255, 162, 0.15); 
+            --neon: #00ffa2; --blue: #00e5ff; --bg: #050608; 
+            --glass: rgba(13, 17, 23, 0.98); --border: rgba(0, 255, 162, 0.15); 
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
 
         body { background: var(--bg); color: #e1e4e8; height: 100vh; display: flex; overflow: hidden; }
 
         /* Auth Gate */
         #gate { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .auth-card { 
-            background: var(--glass); padding: 40px; border: 1px solid var(--border); border-radius: 8px; 
-            width: 380px; text-align: center; box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            background: var(--glass); padding: 40px; border: 1px solid var(--border); border-radius: 4px; 
+            width: 380px; text-align: center; box-shadow: 0 0 50px rgba(0,0,0,1);
         }
-        h1 { font-size: 1.5rem; color: var(--neon); letter-spacing: 4px; margin-bottom: 25px; }
-        
-        input { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid var(--border); color: #fff; border-radius: 4px; outline: none; }
-        .btn { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        h2 { font-weight: 300; color: var(--neon); letter-spacing: 5px; margin-bottom: 30px; }
+
+        input { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid var(--border); color: #fff; outline: none; }
+        .btn { width: 100%; padding: 12px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn-prime { background: var(--neon); color: #000; }
         .btn-reg { background: transparent; color: var(--neon); border: 1px solid var(--neon); }
-        .btn-google { background: #fff; color: #000; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
-        
-        /* App Layout */
-        #app { display: none; width: 100%; height: 100%; flex-direction: row; }
-        .sidebar { width: 70px; background: #0d1117; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 30px 0; gap: 30px; }
-        .nav-ico { font-size: 22px; cursor: pointer; opacity: 0.3; transition: 0.3s; }
-        .nav-ico.active { opacity: 1; color: var(--neon); filter: drop-shadow(0 0 8px var(--neon)); }
+        .btn-google { background: #fff; color: #000; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; font-size: 13px; }
 
-        .main { flex: 1; display: flex; flex-direction: column; background: radial-gradient(circle at top right, #0d1117, #05070a); }
-        .header { height: 45px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; font-size: 11px; color: var(--blue); letter-spacing: 1px; }
+        /* Main App */
+        #nexus { display: none; width: 100%; height: 100%; flex-direction: row; }
+        .side { width: 70px; background: #0a0d11; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 30px 0; gap: 30px; }
+        .ico { font-size: 20px; cursor: pointer; opacity: 0.3; transition: 0.3s; }
+        .ico.active { opacity: 1; color: var(--neon); filter: drop-shadow(0 0 5px var(--neon)); }
 
-        .screen { display: none; flex: 1; flex-direction: column; padding: 25px; overflow: hidden; }
+        .viewport { flex: 1; display: flex; flex-direction: column; background: #050608; }
+        .status-bar { height: 35px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; font-size: 10px; color: var(--blue); }
+
+        .screen { display: none; flex: 1; flex-direction: column; padding: 20px; overflow: hidden; }
         .screen.active { display: flex; }
 
         /* Chat */
-        #messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-bottom: 15px; }
-        .msg { max-width: 75%; padding: 12px 18px; border-radius: 12px; font-size: 14px; line-height: 1.6; position: relative; }
-        .msg.me { align-self: flex-end; background: var(--neon); color: #000; border-bottom-right-radius: 2px; }
-        .msg.peer { align-self: flex-start; background: #1c2128; border: 1px solid var(--border); border-bottom-left-radius: 2px; }
+        #messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 80%; padding: 10px 15px; border-radius: 4px; font-size: 14px; line-height: 1.4; border: 1px solid transparent; }
+        .msg.me { align-self: flex-end; border-color: var(--neon); color: var(--neon); background: rgba(0,255,162,0.05); }
+        .msg.peer { align-self: flex-start; border-color: var(--blue); color: var(--blue); background: rgba(0,229,255,0.05); }
 
-        .input-bar { padding: 20px; display: flex; gap: 12px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.3); }
-        textarea { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; resize: none; outline: none; height: 45px; }
+        .input-wrap { padding: 20px; display: flex; gap: 10px; border-top: 1px solid var(--border); }
+        textarea { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 12px; resize: none; outline: none; height: 45px; }
 
-        /* AI Evolution Console */
-        .console { background: #000; border: 1px solid var(--blue); padding: 20px; font-family: 'Courier New', monospace; font-size: 12px; color: var(--blue); overflow-y: auto; flex: 1; border-radius: 8px; line-height: 1.5; }
+        /* AI Evolution */
+        .console { flex: 1; background: #000; border: 1px solid var(--blue); padding: 15px; font-size: 11px; color: var(--blue); overflow-y: auto; white-space: pre-wrap; }
     </style>
 </head>
 <body>
 
     <div id="gate">
         <div class="auth-card">
-            <h1>SENTINEL_CORE</h1>
-            <input type="email" id="u-email" placeholder="Identity (Email)">
-            <input type="password" id="u-pass" placeholder="Secret Key">
-            <button class="btn btn-prime" id="login-exec">LOGIN</button>
-            <button class="btn btn-reg" id="reg-exec">REGISTER_NODE</button>
-            
-            <button class="btn btn-google" id="google-exec">
+            <h2>SENTINEL_</h2>
+            <input type="email" id="email" placeholder="Identity (Email)">
+            <input type="password" id="pass" placeholder="Secret Key">
+            <button class="btn btn-prime" id="auth-login">INIT_SESSION</button>
+            <button class="btn btn-reg" id="auth-reg">REGISTER_NODE</button>
+            <button class="btn btn-google" id="auth-google">
                 <img src="https://www.google.com/favicon.ico" width="16"> Continue with Google
             </button>
-            <p id="auth-err" style="color: #ff4757; font-size: 10px; margin-top: 15px;"></p>
+            <p id="err-msg" style="color: #ff4757; font-size: 10px; margin-top: 15px;"></p>
         </div>
     </div>
 
-    <div id="app">
-        <aside class="sidebar">
-            <div class="nav-ico active" data-tab="tab-chat">💬</div>
-            <div class="nav-ico" data-tab="tab-ai">🧬</div>
-            <div class="nav-ico" data-tab="tab-sys">⚙️</div>
+    <div id="nexus">
+        <aside class="side">
+            <div class="ico active" data-t="s-chat">💬</div>
+            <div class="ico" data-t="s-ai">🤖</div>
+            <div class="ico" data-t="s-sys">⚙️</div>
         </aside>
-
-        <main class="main">
-            <header class="header" id="sys-status">> STATUS: ENCLAVE_SECURE // READY_FOR_DATA</header>
+        <main class="viewport">
+            <div class="status-bar" id="status">> SYSTEM: ENCLAVE_ACTIVE // NO_THREATS</div>
             
-            <section id="tab-chat" class="screen active">
+            <section id="s-chat" class="screen active">
                 <div id="messages"></div>
-                <div class="input-bar">
-                    <textarea id="m-input" placeholder="Encrypt packet..."></textarea>
-                    <button class="btn btn-prime" id="m-send" style="width: 80px; margin: 0;">SEND</button>
+                <div class="input-wrap">
+                    <textarea id="minput" placeholder="Input packet..."></textarea>
+                    <button class="btn btn-prime" id="send-btn" style="width: 80px; margin:0;">PUSH</button>
                 </div>
             </section>
 
-            <section id="tab-ai" class="screen">
-                <h2 style="margin-bottom: 20px;">Evolutionary Engine</h2>
-                <div class="console" id="ai-log">> Heuristics: Online<br>> Waiting for code analysis...</div>
-                <button class="btn btn-prime" id="ai-repair" style="margin-top: 15px; background: var(--blue);">RUN SELF-HEAL PROTOCOL</button>
+            <section id="s-ai" class="screen">
+                <h3 style="margin-bottom: 15px; color: var(--blue);">AI_EVOLUTION_ENGINE</h3>
+                <div class="console" id="ai-log">> Awaiting code audit...</div>
+                <button class="btn btn-prime" id="ai-fix" style="margin-top: 15px; background: var(--blue);">EXECUTE SELF-HEAL</button>
             </section>
 
-            <section id="tab-sys" class="screen">
-                <h2>Node Config</h2>
-                <div id="node-info" style="margin: 20px 0; font-size: 13px; opacity: 0.6;"></div>
-                <button class="btn" id="logout" style="background: #ff4757; color: #fff;">TERMINATE_SESSION</button>
+            <section id="s-sys" class="screen">
+                <h3>NODE_CONFIG</h3>
+                <div id="user-info" style="margin: 20px 0; font-size: 12px;"></div>
+                <button class="btn" id="logout-btn" style="background: #ff4757; color: #fff;">KILL_CONNECTION</button>
             </section>
         </main>
     </div>
