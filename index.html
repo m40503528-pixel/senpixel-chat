@@ -3,100 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Senpixel Nexus // v7.0 Singularity</title>
+    <title>Senpixel Nexus // v8.0 Omni-Core</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         :root { 
-            --neon: #00ffa2; --blue: #00e5ff; --bg: #050608; 
+            --neon: #00ffa2; --blue: #00e5ff; --alert: #ff4757; --bg: #050608; 
             --glass: rgba(13, 17, 23, 0.98); --border: rgba(0, 255, 162, 0.15); 
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
 
         body { background: var(--bg); color: #e1e4e8; height: 100vh; display: flex; overflow: hidden; }
 
-        /* Auth Gate */
+        /* Gate (Вход и Регистрация) */
         #gate { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .auth-card { 
-            background: var(--glass); padding: 40px; border: 1px solid var(--border); border-radius: 4px; 
-            width: 380px; text-align: center; box-shadow: 0 0 50px rgba(0,0,0,1);
-        }
+        .auth-card { background: var(--glass); padding: 40px; border: 1px solid var(--border); width: 380px; text-align: center; box-shadow: 0 0 50px rgba(0,0,0,1); }
         h2 { font-weight: 300; color: var(--neon); letter-spacing: 5px; margin-bottom: 30px; }
-
         input { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid var(--border); color: #fff; outline: none; }
         .btn { width: 100%; padding: 12px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn-prime { background: var(--neon); color: #000; }
         .btn-reg { background: transparent; color: var(--neon); border: 1px solid var(--neon); }
         .btn-google { background: #fff; color: #000; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; font-size: 13px; }
 
-        /* Main App */
+        /* App Layout */
         #nexus { display: none; width: 100%; height: 100%; flex-direction: row; }
-        .side { width: 70px; background: #0a0d11; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 30px 0; gap: 30px; }
-        .ico { font-size: 20px; cursor: pointer; opacity: 0.3; transition: 0.3s; }
+        .side { width: 75px; background: #0a0d11; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 25px; overflow-y: auto; }
+        .ico { font-size: 20px; cursor: pointer; opacity: 0.3; transition: 0.3s; position: relative; }
+        .ico:hover { opacity: 0.8; }
         .ico.active { opacity: 1; color: var(--neon); filter: drop-shadow(0 0 5px var(--neon)); }
 
         .viewport { flex: 1; display: flex; flex-direction: column; background: #050608; }
-        .status-bar { height: 35px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; font-size: 10px; color: var(--blue); }
+        .status-bar { height: 40px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 10px; color: var(--blue); }
 
         .screen { display: none; flex: 1; flex-direction: column; padding: 20px; overflow: hidden; }
         .screen.active { display: flex; }
 
-        /* Chat */
-        #messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 80%; padding: 10px 15px; border-radius: 4px; font-size: 14px; line-height: 1.4; border: 1px solid transparent; }
+        /* 5. Чаты, Медиа и Звонки */
+        .chat-header { display: flex; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+        .chat-actions button { background: transparent; color: var(--blue); border: 1px solid var(--blue); padding: 5px 15px; cursor: pointer; font-size: 12px; }
+        
+        #messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
+        .msg { max-width: 80%; padding: 10px 15px; border-radius: 4px; font-size: 14px; line-height: 1.4; border: 1px solid transparent; position: relative; }
         .msg.me { align-self: flex-end; border-color: var(--neon); color: var(--neon); background: rgba(0,255,162,0.05); }
         .msg.peer { align-self: flex-start; border-color: var(--blue); color: var(--blue); background: rgba(0,229,255,0.05); }
 
-        .input-wrap { padding: 20px; display: flex; gap: 10px; border-top: 1px solid var(--border); }
+        .input-wrap { padding: 15px 0 0 0; display: flex; gap: 10px; }
+        .attach-btn { background: #0a0d11; border: 1px solid var(--border); color: #fff; width: 45px; cursor: pointer; font-size: 18px; }
         textarea { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 12px; resize: none; outline: none; height: 45px; }
 
-        /* AI Evolution */
-        .console { flex: 1; background: #000; border: 1px solid var(--blue); padding: 15px; font-size: 11px; color: var(--blue); overflow-y: auto; white-space: pre-wrap; }
+        /* Консоли модулей */
+        .module-box { border: 1px solid var(--border); padding: 15px; background: rgba(0,0,0,0.5); margin-bottom: 15px; }
+        .module-box h4 { color: var(--blue); margin-bottom: 10px; }
+        .ai-log { flex: 1; background: #000; border: 1px solid var(--blue); padding: 15px; font-size: 11px; color: var(--blue); overflow-y: auto; white-space: pre-wrap; }
     </style>
 </head>
 <body>
 
     <div id="gate">
         <div class="auth-card">
-            <h2>SENTINEL_</h2>
-            <input type="email" id="email" placeholder="Identity (Email)">
+            <h2>NEXUS_CORE</h2>
+            <input type="email" id="email" placeholder="Terminal ID">
             <input type="password" id="pass" placeholder="Secret Key">
             <button class="btn btn-prime" id="auth-login">INIT_SESSION</button>
             <button class="btn btn-reg" id="auth-reg">REGISTER_NODE</button>
             <button class="btn btn-google" id="auth-google">
-                <img src="https://www.google.com/favicon.ico" width="16"> Continue with Google
+                <img src="https://www.google.com/favicon.ico" width="16"> Google Core Access
             </button>
-            <p id="err-msg" style="color: #ff4757; font-size: 10px; margin-top: 15px;"></p>
+            <p id="err-msg" style="color: var(--alert); font-size: 10px; margin-top: 15px;"></p>
         </div>
     </div>
 
     <div id="nexus">
         <aside class="side">
-            <div class="ico active" data-t="s-chat">💬</div>
-            <div class="ico" data-t="s-ai">🤖</div>
-            <div class="ico" data-t="s-sys">⚙️</div>
+            <div class="ico active" data-t="s-chat" title="Чаты и Сообщения">💬</div>
+            <div class="ico" data-t="s-channels" title="Группы и Каналы">📢</div>
+            <div class="ico" data-t="s-calls" title="Голос и Видео">📞</div>
+            <div class="ico" data-t="s-ai" title="AI Эволюция">🤖</div>
+            <div class="ico" data-t="s-proxy" title="Сеть и Прокси">🔗</div>
+            <div class="ico" data-t="s-sec" title="Приватность (2FA)">🛡️</div>
+            <div class="ico" data-t="s-prime" title="Premium & Stars">✨</div>
+            <div class="ico" data-t="s-sys" title="Настройки">⚙️</div>
         </aside>
+        
         <main class="viewport">
-            <div class="status-bar" id="status">> SYSTEM: ENCLAVE_ACTIVE // NO_THREATS</div>
+            <div class="status-bar">
+                <span id="status">> SYSTEM: ENCLAVE_ACTIVE // E2E_SECURE</span>
+                <span id="ping" style="color: var(--neon);">PING: 12ms</span>
+            </div>
             
             <section id="s-chat" class="screen active">
+                <div class="chat-header">
+                    <span style="color: var(--neon);">> TARGET: SECURE_CHANNEL_01</span>
+                    <div class="chat-actions">
+                        <button id="call-init">📞 AUDIO</button>
+                        <button id="video-init">🎬 VIDEO</button>
+                    </div>
+                </div>
                 <div id="messages"></div>
                 <div class="input-wrap">
-                    <textarea id="minput" placeholder="Input packet..."></textarea>
+                    <button class="attach-btn" title="Встроенный редактор/Файлы">📎</button>
+                    <textarea id="minput" placeholder="Encrypt packet (supports Markdown & Spoilers)..."></textarea>
                     <button class="btn btn-prime" id="send-btn" style="width: 80px; margin:0;">PUSH</button>
                 </div>
             </section>
 
             <section id="s-ai" class="screen">
-                <h3 style="margin-bottom: 15px; color: var(--blue);">AI_EVOLUTION_ENGINE</h3>
-                <div class="console" id="ai-log">> Awaiting code audit...</div>
-                <button class="btn btn-prime" id="ai-fix" style="margin-top: 15px; background: var(--blue);">EXECUTE SELF-HEAL</button>
+                <h3 style="color: var(--blue);">AI_EVOLUTION_ENGINE // TERMINAL</h3>
+                <div class="ai-log" id="ai-log">> Awaiting code audit...</div>
+                <button class="btn btn-prime" id="ai-fix" style="background: var(--blue); margin-top:10px;">EXECUTE SELF-HEAL</button>
+            </section>
+
+            <section id="s-proxy" class="screen">
+                <h3 style="color: var(--blue); margin-bottom: 20px;">NETWORK_&_PROXY</h3>
+                <div class="module-box">
+                    <h4>MTProto / SOCKS5 Routing</h4>
+                    <p style="font-size: 12px; color: #888;">Active Node: Frankfurt_Main</p>
+                    <button class="btn btn-reg" style="width: auto; margin-top: 10px;">CHANGE PROXY NODE</button>
+                </div>
+            </section>
+
+            <section id="s-sec" class="screen">
+                <h3 style="color: var(--blue); margin-bottom: 20px;">SECURITY_CORE</h3>
+                <div class="module-box">
+                    <h4>Cloud Password (2FA)</h4>
+                    <button class="btn btn-reg" style="width: auto;">ENABLE 2FA</button>
+                </div>
+                <div class="module-box">
+                    <h4>Active Sessions</h4>
+                    <button class="btn" style="width: auto; background: var(--alert); color: #fff;">TERMINATE ALL OTHER SESSIONS</button>
+                </div>
             </section>
 
             <section id="s-sys" class="screen">
                 <h3>NODE_CONFIG</h3>
-                <div id="user-info" style="margin: 20px 0; font-size: 12px;"></div>
-                <button class="btn" id="logout-btn" style="background: #ff4757; color: #fff;">KILL_CONNECTION</button>
+                <div id="user-info" style="margin: 20px 0; font-size: 12px; color: var(--neon);"></div>
+                <div class="module-box">
+                    <h4>UI Customization (Тематика)</h4>
+                    <button class="btn btn-reg" style="width: auto; border-color: #888; color: #888;">IMPORT THEME</button>
+                </div>
+                <button class="btn" id="logout-btn" style="background: var(--alert); color: #fff;">KILL_CONNECTION</button>
             </section>
+
+            <section id="s-channels" class="screen"><h3 style="color: var(--blue);">BROADCAST_CHANNELS (Beta)</h3></section>
+            <section id="s-calls" class="screen"><h3 style="color: var(--blue);">WEBRTC_COMMUNICATIONS</h3></section>
+            <section id="s-prime" class="screen"><h3 style="color: var(--neon);">NEXUS_ENTERPRISE & STARS</h3></section>
         </main>
     </div>
 
