@@ -1,0 +1,3630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senpixel</title>
+    <style>
+        :root {
+            --bg: #04060a;
+            --bg-2: #0b1018;
+            --panel: rgba(11, 16, 24, 0.74);
+            --panel-strong: rgba(11, 16, 24, 0.92);
+            --line: rgba(255, 255, 255, 0.08);
+            --line-strong: rgba(255, 255, 255, 0.16);
+            --text: #f4f7ff;
+            --muted: #98a5bb;
+            --accent: #00d9ff;
+            --accent-soft: rgba(0, 217, 255, 0.12);
+            --accent-2: #6f7cff;
+            --success: #3ed695;
+            --warning: #f0b25c;
+            --danger: #ff667c;
+            --shadow: 0 28px 60px rgba(0, 0, 0, 0.32);
+            --radius-xl: 30px;
+            --radius-lg: 22px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --room-accent: #00d9ff;
+            color-scheme: dark;
+        }
+
+        body[data-theme="steel"] {
+            --bg: #091018;
+            --bg-2: #121a24;
+            --panel: rgba(15, 23, 34, 0.76);
+            --panel-strong: rgba(15, 23, 34, 0.92);
+            --accent: #6ab6ff;
+            --accent-soft: rgba(106, 182, 255, 0.14);
+            --accent-2: #8be4cf;
+            --room-accent: #6ab6ff;
+        }
+
+        body[data-theme="ember"] {
+            --bg: #110b09;
+            --bg-2: #1a120e;
+            --panel: rgba(28, 18, 14, 0.78);
+            --panel-strong: rgba(28, 18, 14, 0.92);
+            --accent: #ff915d;
+            --accent-soft: rgba(255, 145, 93, 0.12);
+            --accent-2: #ffd56c;
+            --room-accent: #ff915d;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background:
+                radial-gradient(circle at 14% 20%, rgba(0, 217, 255, 0.14), transparent 18%),
+                radial-gradient(circle at 84% 10%, rgba(111, 124, 255, 0.16), transparent 18%),
+                radial-gradient(circle at 78% 84%, rgba(255, 145, 93, 0.12), transparent 18%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 50%, #05080e 100%);
+            color: var(--text);
+            font-family: "Bahnschrift", "Segoe UI Variable", "Segoe UI", sans-serif;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 34px 34px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.86), transparent 92%);
+        }
+
+        body.compact {
+            --radius-lg: 18px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+        }
+
+        body.reduce-motion * {
+            animation: none !important;
+            transition: none !important;
+            scroll-behavior: auto !important;
+        }
+
+        body.focus-mode .sidebar-right {
+            display: none;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+            color: inherit;
+        }
+
+        button {
+            border: 0;
+            background: none;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .app {
+            position: relative;
+            min-height: 100vh;
+            isolation: isolate;
+        }
+
+        .ambient {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .ambient::before,
+        .ambient::after {
+            content: "";
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(10px);
+            opacity: 0.7;
+            animation: drift 22s ease-in-out infinite;
+        }
+
+        .ambient::before {
+            width: 42vw;
+            height: 42vw;
+            left: -10vw;
+            top: -8vw;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.16), transparent 60%);
+        }
+
+        .ambient::after {
+            width: 36vw;
+            height: 36vw;
+            right: -8vw;
+            top: 8vh;
+            background: radial-gradient(circle, rgba(111, 124, 255, 0.16), transparent 60%);
+            animation-duration: 26s;
+        }
+
+        .entry-screen,
+        .auth-overlay,
+        .command-overlay {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: rgba(5, 8, 14, 0.78);
+            backdrop-filter: blur(16px);
+            z-index: 30;
+        }
+
+        .entry-card,
+        .auth-card,
+        .command-card {
+            width: min(520px, 100%);
+            border-radius: 34px;
+            border: 1px solid var(--line-strong);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 20%), var(--panel-strong);
+            box-shadow: var(--shadow);
+            padding: 34px;
+            animation: rise 0.7s ease;
+        }
+
+        .entry-card {
+            text-align: center;
+            padding: 42px 34px;
+        }
+
+        .entry-kicker,
+        .section-kicker {
+            margin: 0 0 12px;
+            font-size: 0.78rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .entry-card h1,
+        .auth-card h2,
+        .command-card h3,
+        .panel h3,
+        .panel h4 {
+            margin: 0;
+            letter-spacing: -0.04em;
+        }
+
+        .entry-card h1 {
+            font-size: clamp(2.7rem, 7vw, 4.5rem);
+            margin-bottom: 18px;
+        }
+
+        .entry-actions {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .os-note {
+            margin: 18px 0 0;
+            color: var(--muted);
+            font-size: 0.98rem;
+            min-height: 1.3em;
+        }
+
+        .auth-card p {
+            color: var(--muted);
+            margin: 8px 0 0;
+        }
+
+        .auth-grid {
+            display: grid;
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .field {
+            display: grid;
+            gap: 8px;
+        }
+
+        .field label {
+            font-size: 0.86rem;
+            color: var(--muted);
+            letter-spacing: 0.02em;
+        }
+
+        .field input,
+        .field textarea,
+        .field select {
+            width: 100%;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 14px 16px;
+            outline: none;
+            transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+        }
+
+        .field input:focus,
+        .field textarea:focus,
+        .field select:focus {
+            border-color: rgba(255, 255, 255, 0.26);
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 96px;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .checkbox {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 0.94rem;
+        }
+
+        .checkbox input {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+        }
+
+        .btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border-radius: 16px;
+            padding: 14px 18px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #061018;
+            box-shadow: 0 18px 34px rgba(0, 0, 0, 0.26);
+        }
+
+        .btn-secondary {
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+        }
+
+        .btn-ghost {
+            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--muted);
+        }
+
+        .btn-danger {
+            border: 1px solid rgba(255, 102, 124, 0.22);
+            background: rgba(255, 102, 124, 0.1);
+            color: #ffd5db;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 320px minmax(0, 1fr) 320px;
+            gap: 18px;
+            min-height: 100vh;
+            padding: 18px;
+        }
+
+        .sidebar,
+        .chat-column {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .panel {
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 18%), var(--panel);
+            box-shadow: var(--shadow);
+            padding: 18px;
+            overflow: hidden;
+        }
+
+        .brand-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .brand-mark {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .brand-dot,
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.45);
+        }
+
+        .status-dot.offline {
+            background: rgba(255, 255, 255, 0.14);
+            box-shadow: none;
+        }
+
+        .status-dot.connecting {
+            background: var(--warning);
+            box-shadow: 0 0 18px rgba(240, 178, 92, 0.35);
+        }
+
+        .brand-badge {
+            padding: 8px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .profile-shell {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 18px;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 1.18rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), var(--accent-soft));
+            color: var(--text);
+            flex-shrink: 0;
+        }
+
+        .avatar-mini {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+        }
+
+        .profile-meta strong,
+        .room-head h2 {
+            display: block;
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .stat-row,
+        .chip-row,
+        .action-row,
+        .header-actions,
+        .composer-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stat-pill,
+        .chip,
+        .mini-pill {
+            border-radius: 999px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .chip {
+            cursor: pointer;
+            transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+        }
+
+        .chip.active {
+            color: var(--text);
+            background: var(--accent-soft);
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .btn.is-active {
+            background: var(--accent-soft);
+            border-color: rgba(255, 255, 255, 0.14);
+            color: var(--text);
+        }
+
+        .room-list,
+        .members-list,
+        .saved-list,
+        .protocol-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+        }
+
+        .room-list {
+            max-height: 340px;
+            overflow: auto;
+            padding-right: 4px;
+        }
+
+        .room-card,
+        .member-card,
+        .saved-card,
+        .protocol-card {
+            width: 100%;
+            text-align: left;
+            padding: 14px;
+            border-radius: var(--radius-md);
+            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.03);
+            transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .room-card:hover,
+        .member-card:hover,
+        .saved-card:hover,
+        .protocol-card:hover {
+            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .room-card.active {
+            border-color: rgba(255, 255, 255, 0.14);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+        }
+
+        .room-card-top,
+        .member-card-top,
+        .message-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .room-title,
+        .member-name,
+        .saved-title {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .room-sub,
+        .saved-sub,
+        .protocol-card span,
+        .typing-bar,
+        .reply-preview,
+        .message-reply,
+        .message-meta,
+        .safety-copy,
+        .message-actions button {
+            color: var(--muted);
+        }
+
+        .room-card::before {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 3px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--room-accent), transparent);
+            opacity: 0.18;
+            margin-bottom: 12px;
+        }
+
+        .chat-column {
+            gap: 14px;
+        }
+
+        .room-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .room-head p {
+            margin: 8px 0 0;
+            color: var(--muted);
+        }
+
+        .pin-strip,
+        .typing-strip,
+        .reply-strip,
+        .locked-strip {
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .locked-strip {
+            border-style: dashed;
+            color: var(--muted);
+        }
+
+        .messages {
+            min-height: 0;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 4px;
+        }
+
+        .message-card {
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 28%), rgba(255, 255, 255, 0.025);
+            padding: 16px;
+            animation: rise 0.28s ease;
+        }
+
+        .message-card.mine {
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+
+        .message-card.highlight {
+            outline: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 0 0 12px rgba(255, 255, 255, 0.02);
+        }
+
+        .message-card.locked {
+            border-style: dashed;
+        }
+
+        .message-card .message-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.84rem;
+            margin-bottom: 8px;
+        }
+
+        .message-content {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.52;
+            font-size: 0.98rem;
+        }
+
+        .message-reply {
+            margin-bottom: 10px;
+            padding-left: 12px;
+            border-left: 2px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        .message-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .message-actions button,
+        .reaction-chip {
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            font-size: 0.84rem;
+        }
+
+        .message-actions button:hover,
+        .reaction-chip:hover {
+            border-color: rgba(255, 255, 255, 0.16);
+            color: var(--text);
+        }
+
+        .reaction-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .reaction-chip.active {
+            background: var(--accent-soft);
+            color: var(--text);
+        }
+
+        .composer {
+            display: grid;
+            gap: 12px;
+        }
+
+        .composer-toolbar {
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .composer-toolbar .action-row {
+            align-items: center;
+        }
+
+        .composer-area {
+            display: grid;
+            gap: 12px;
+        }
+
+        .composer textarea {
+            min-height: 120px;
+        }
+
+        .attachment-preview,
+        .attachment-grid {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        }
+
+        .attachment-item,
+        .attachment-card {
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.035);
+            overflow: hidden;
+        }
+
+        .attachment-item img,
+        .attachment-card img {
+            width: 100%;
+            display: block;
+            aspect-ratio: 16 / 11;
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .attachment-meta {
+            padding: 12px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .attachment-meta strong {
+            font-size: 0.92rem;
+        }
+
+        .attachment-meta span,
+        .attachment-meta a {
+            color: var(--muted);
+            font-size: 0.84rem;
+            word-break: break-word;
+        }
+
+        .attachment-meta a {
+            text-decoration: none;
+        }
+
+        .attachment-meta a:hover {
+            color: var(--text);
+        }
+
+        .rich-html {
+            display: grid;
+            gap: 12px;
+        }
+
+        .rich-html p,
+        .rich-html ul,
+        .rich-html ol,
+        .rich-html blockquote,
+        .rich-html pre {
+            margin: 0;
+        }
+
+        .rich-html ul,
+        .rich-html ol {
+            padding-left: 20px;
+        }
+
+        .rich-html blockquote {
+            padding-left: 14px;
+            border-left: 2px solid rgba(255, 255, 255, 0.12);
+            color: var(--muted);
+        }
+
+        .rich-html a {
+            color: var(--accent);
+        }
+
+        .rich-html code {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            font-family: "Cascadia Code", "Consolas", monospace;
+            font-size: 0.92em;
+        }
+
+        .code-shell {
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(3, 7, 12, 0.72);
+        }
+
+        .code-shell .code-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.04);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .code-shell pre {
+            margin: 0;
+            padding: 14px;
+            overflow: auto;
+        }
+
+        .code-shell pre code {
+            display: block;
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+            font-size: 0.92rem;
+            line-height: 1.52;
+        }
+
+        .empty-state {
+            padding: 26px;
+            border-radius: var(--radius-lg);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .safety-score {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .safety-score strong {
+            font-size: 2.4rem;
+            line-height: 1;
+        }
+
+        .score-bar {
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+            margin: 14px 0;
+        }
+
+        .score-bar span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        }
+
+        .settings-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-row:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .setting-meta strong,
+        .setting-meta span {
+            display: block;
+        }
+
+        .setting-meta span {
+            color: var(--muted);
+            font-size: 0.86rem;
+            margin-top: 3px;
+        }
+
+        .toast-rack {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 50;
+        }
+
+        .toast {
+            min-width: 240px;
+            max-width: 320px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--panel-strong);
+            box-shadow: var(--shadow);
+            animation: toastIn 0.22s ease;
+        }
+
+        .toast.warning {
+            border-color: rgba(240, 178, 92, 0.18);
+        }
+
+        .toast.error {
+            border-color: rgba(255, 102, 124, 0.18);
+        }
+
+        .server-banner {
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 60;
+            padding: 14px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 102, 124, 0.22);
+            background: rgba(28, 10, 14, 0.92);
+            color: #ffe4e8;
+            box-shadow: var(--shadow);
+            text-align: center;
+            max-width: min(92vw, 520px);
+            animation: toastIn 0.22s ease;
+        }
+
+        .supporter-grid,
+        .radar-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .supporter-card,
+        .radar-card {
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.035);
+            padding: 14px;
+        }
+
+        .supporter-card strong,
+        .radar-card strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .supporter-card p,
+        .radar-card p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .supporter-badge {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.18), rgba(111, 124, 255, 0.18));
+            color: var(--text);
+        }
+
+        .command-card {
+            display: grid;
+            gap: 16px;
+        }
+
+        .command-list {
+            display: grid;
+            gap: 10px;
+            max-height: 340px;
+            overflow: auto;
+        }
+
+        .command-item {
+            width: 100%;
+            text-align: left;
+            border-radius: 16px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .command-item small {
+            display: block;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(18px) scale(0.985);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes drift {
+            0%, 100% {
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+            50% {
+                transform: translate3d(2vw, 2vh, 0) scale(1.05);
+            }
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1180px) {
+            .workspace {
+                grid-template-columns: 280px minmax(0, 1fr);
+            }
+
+            .sidebar-right {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                align-content: start;
+            }
+
+            body.focus-mode .sidebar-right {
+                display: none;
+            }
+        }
+
+        @media (max-width: 860px) {
+            html, body {
+                overflow: auto;
+            }
+
+            .workspace {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .sidebar-right {
+                grid-template-columns: 1fr;
+            }
+
+            .room-list {
+                max-height: none;
+            }
+
+            .field-row {
+                grid-template-columns: 1fr;
+            }
+
+            .entry-card,
+            .auth-card,
+            .command-card {
+                padding: 26px;
+            }
+        }
+    </style>
+</head>
+<body data-theme="nebula">
+    <div class="app">
+        <div class="ambient"></div>
+        <div id="serverOfflineNotice" class="server-banner hidden">Извините, сервера отключены</div>
+
+        <section id="entryScreen" class="entry-screen">
+            <div class="entry-card">
+                <p class="entry-kicker">welcome</p>
+                <h1>Welcome to Senpixel</h1>
+                <div class="entry-actions">
+                    <button id="enterMessengerButton" class="btn btn-primary" type="button">Messenger</button>
+                    <button id="showOsButton" class="btn btn-secondary" type="button">OS</button>
+                </div>
+                <p id="osNotice" class="os-note hidden">&#42;&#1074; &#1088;&#1072;&#1079;&#1088;&#1072;&#1073;&#1086;&#1090;&#1082;&#1077;&#42;</p>
+            </div>
+        </section>
+
+        <section id="authOverlay" class="auth-overlay hidden">
+            <form id="authForm" class="auth-card">
+                <p class="entry-kicker">enter</p>
+                <h2>Open your Senpixel session</h2>
+                <p>Nickname, optional room id and room key stay on this device unless you explicitly share them.</p>
+                <div class="auth-grid">
+                    <div class="field">
+                        <label for="authNickname">Nickname</label>
+                        <input id="authNickname" type="text" maxlength="24" autocomplete="nickname" placeholder="Choose a name" required>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="authRoom">Room id</label>
+                            <input id="authRoom" type="text" maxlength="40" autocomplete="off" placeholder="Leave blank for main room">
+                        </div>
+                        <div class="field">
+                            <label for="authSecret">Room key</label>
+                            <input id="authSecret" type="password" autocomplete="off" placeholder="Optional shared key">
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="authAvatarEmoji">Avatar emoji</label>
+                            <input id="authAvatarEmoji" type="text" maxlength="8" autocomplete="off" placeholder="S">
+                        </div>
+                        <div class="field">
+                            <label for="authStatusEmoji">Status emoji</label>
+                            <input id="authStatusEmoji" type="text" maxlength="8" autocomplete="off" placeholder="⚡">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="authStatusText">Status text</label>
+                        <input id="authStatusText" type="text" maxlength="64" autocomplete="off" placeholder="Building">
+                    </div>
+                    <label class="checkbox">
+                        <input id="authRemember" type="checkbox" checked>
+                        <span>Remember room key on this device</span>
+                    </label>
+                    <button id="authSubmitButton" class="btn btn-primary btn-block" type="submit">Enter Messenger</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="commandOverlay" class="command-overlay hidden">
+            <div class="command-card">
+                <div>
+                    <p class="entry-kicker">command deck</p>
+                    <h3>Quick actions</h3>
+                </div>
+                <div class="field">
+                    <label for="commandSearch">Find action</label>
+                    <input id="commandSearch" type="text" placeholder="Focus composer, open saved, unlock room">
+                </div>
+                <div id="commandList" class="command-list"></div>
+            </div>
+        </section>
+
+        <main id="workspace" class="workspace hidden">
+            <aside class="sidebar sidebar-left">
+                <section class="panel brand-panel">
+                    <div class="brand-mark">
+                        <span class="brand-dot"></span>
+                        <span>Senpixel</span>
+                    </div>
+                    <span id="relayBadge" class="brand-badge">offline</span>
+                </section>
+
+                <section class="panel">
+                    <div id="profileSummary" class="profile-shell"></div>
+                </section>
+
+                <section class="panel">
+                    <p class="section-kicker">discover</p>
+                    <div class="field">
+                        <label for="searchInput">Search messages</label>
+                        <input id="searchInput" type="text" autocomplete="off" placeholder="Search sender or content">
+                    </div>
+                    <div id="filterBar" class="chip-row" style="margin-top: 14px;">
+                        <button class="chip active" type="button" data-filter="all">All</button>
+                        <button class="chip" type="button" data-filter="mine">Mine</button>
+                        <button class="chip" type="button" data-filter="saved">Saved</button>
+                        <button class="chip" type="button" data-filter="verified">Verified</button>
+                        <button class="chip" type="button" data-filter="locked">Locked</button>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="room-head" style="margin-bottom: 14px;">
+                        <div>
+                            <p class="section-kicker">rooms</p>
+                            <h3>Spaces</h3>
+                        </div>
+                    </div>
+                    <div id="roomList" class="room-list"></div>
+                </section>
+
+                <section class="panel">
+                    <p class="section-kicker">room key</p>
+                    <form id="roomSecretForm" class="auth-grid" style="margin-top: 0;">
+                        <div class="field">
+                            <label for="roomSecretInput">Active room key</label>
+                            <input id="roomSecretInput" type="password" autocomplete="off" placeholder="Unlock this room">
+                        </div>
+                        <label class="checkbox">
+                            <input id="roomRememberInput" type="checkbox">
+                            <span>Remember this key</span>
+                        </label>
+                        <div class="action-row">
+                            <button class="btn btn-primary" type="submit">Unlock Room</button>
+                            <button id="clearRoomSecretButton" class="btn btn-ghost" type="button">Clear</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="panel">
+                    <p class="section-kicker">create</p>
+                    <form id="createRoomForm" class="auth-grid" style="margin-top: 0;">
+                        <div class="field">
+                            <label for="createRoomTitle">Room title</label>
+                            <input id="createRoomTitle" type="text" maxlength="42" autocomplete="off" placeholder="Design Ops">
+                        </div>
+                        <div class="field">
+                            <label for="createRoomDescription">Room description</label>
+                            <input id="createRoomDescription" type="text" maxlength="160" autocomplete="off" placeholder="What this room is for">
+                        </div>
+                        <button class="btn btn-secondary" type="submit">Create Room</button>
+                    </form>
+                </section>
+            </aside>
+
+            <section class="chat-column">
+                <section class="panel">
+                    <div class="room-head">
+                        <div>
+                            <p class="section-kicker">active room</p>
+                            <h2 id="activeRoomTitle">Senpixel</h2>
+                            <p id="activeRoomMeta">Choose a room to start.</p>
+                        </div>
+                        <div class="header-actions">
+                            <button id="inviteRoomButton" class="btn btn-ghost" type="button">Invite</button>
+                            <button id="favoriteRoomButton" class="btn btn-ghost" type="button">Favorite</button>
+                            <button id="openCommandDeckButton" class="btn btn-ghost" type="button">Command</button>
+                            <button id="showSavedButton" class="btn btn-ghost" type="button">Saved</button>
+                        </div>
+                    </div>
+                </section>
+
+                <div id="pinStrip" class="pin-strip hidden"></div>
+                <div id="typingStrip" class="typing-strip hidden"></div>
+                <div id="lockedStrip" class="locked-strip hidden"></div>
+
+                <section id="messageList" class="messages"></section>
+
+                <section class="panel composer">
+                    <div id="replyStrip" class="reply-strip hidden"></div>
+                    <div class="composer-toolbar">
+                        <div class="action-row">
+                            <span class="mini-pill" id="composeModeLabel">New message</span>
+                            <span class="mini-pill" id="composeFingerprint">Unsigned</span>
+                        </div>
+                        <div class="action-row">
+                            <label class="checkbox" style="gap: 8px;">
+                                <span class="muted">Mode</span>
+                                <select id="composeModeSelect">
+                                    <option value="text">Text</option>
+                                    <option value="markdown">Markdown</option>
+                                    <option value="code">Code</option>
+                                </select>
+                            </label>
+                            <div id="codeLanguageField" class="field" style="min-width: 140px;">
+                                <input id="codeLanguageInput" type="text" maxlength="20" autocomplete="off" placeholder="js">
+                            </div>
+                            <label class="checkbox" style="gap: 8px;">
+                                <span class="muted">TTL</span>
+                                <select id="ttlSelect">
+                                    <option value="0">No burn</option>
+                                    <option value="300">5 minutes</option>
+                                    <option value="1800">30 minutes</option>
+                                    <option value="3600" selected>1 hour</option>
+                                    <option value="21600">6 hours</option>
+                                    <option value="86400">24 hours</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="composer-area">
+                        <div class="field">
+                            <label for="composeInput">Message</label>
+                            <textarea id="composeInput" autocomplete="off" placeholder="Write securely. Enter sends, Shift+Enter adds a line."></textarea>
+                        </div>
+                        <input id="attachmentInput" type="file" multiple accept="image/*,.txt,.md,.json,.csv,.log,.pdf" class="hidden">
+                        <div id="attachmentPreview" class="attachment-preview hidden"></div>
+                        <div class="action-row">
+                            <button id="attachButton" class="btn btn-secondary" type="button">Attach</button>
+                            <button id="clearAttachmentsButton" class="btn btn-ghost hidden" type="button">Clear Media</button>
+                            <button id="sendButton" class="btn btn-primary" type="button">Send</button>
+                            <button id="cancelComposeModeButton" class="btn btn-ghost hidden" type="button">Cancel</button>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <aside class="sidebar sidebar-right">
+                <section class="panel">
+                    <p class="section-kicker">safety</p>
+                    <div id="safetyCenter"></div>
+                </section>
+
+                <section class="panel">
+                    <p class="section-kicker">members</p>
+                    <div id="membersList" class="members-list"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="room-head" style="margin-bottom: 14px;">
+                        <div>
+                            <p class="section-kicker">saved</p>
+                            <h4>Vault</h4>
+                        </div>
+                        <button id="clearSavedFilterButton" class="btn btn-ghost" type="button">All</button>
+                    </div>
+                    <div id="savedList" class="saved-list"></div>
+                </section>
+
+                <section class="panel">
+                    <p class="section-kicker">settings</p>
+                    <div class="settings-grid">
+                        <div class="field">
+                            <label for="languageSelect">Language</label>
+                            <select id="languageSelect">
+                                <option value="auto">Auto</option>
+                                <option value="en">English</option>
+                                <option value="ru">Русский</option>
+                                <option value="es">Español</option>
+                                <option value="fr">Français</option>
+                                <option value="de">Deutsch</option>
+                                <option value="pt">Português</option>
+                                <option value="tr">Türkçe</option>
+                                <option value="ar">العربية</option>
+                                <option value="hi">हिन्दी</option>
+                                <option value="ja">日本語</option>
+                                <option value="ko">한국어</option>
+                                <option value="zh">中文</option>
+                                <option value="uk">Українська</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="themeSelect">Theme</label>
+                            <select id="themeSelect">
+                                <option value="nebula">Nebula</option>
+                                <option value="steel">Steel</option>
+                                <option value="ember">Ember</option>
+                            </select>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-meta">
+                                <strong>Motion</strong>
+                                <span>Keep interface transitions and ambient movement</span>
+                            </div>
+                            <input id="settingMotion" type="checkbox">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-meta">
+                                <strong>Compact mode</strong>
+                                <span>Tighter cards and denser chat spacing</span>
+                            </div>
+                            <input id="settingCompact" type="checkbox">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-meta">
+                                <strong>Sound pulse</strong>
+                                <span>Short tone on incoming messages</span>
+                            </div>
+                            <input id="settingSound" type="checkbox">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-meta">
+                                <strong>Timestamps</strong>
+                                <span>Show time on message cards and events</span>
+                            </div>
+                            <input id="settingTimestamps" type="checkbox">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-meta">
+                                <strong>Verified badges</strong>
+                                <span>Try to verify packet signatures locally</span>
+                            </div>
+                            <input id="settingVerified" type="checkbox">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-meta">
+                                <strong>Focus mode</strong>
+                                <span>Hide the right rail and center the chat</span>
+                            </div>
+                            <input id="settingFocus" type="checkbox">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-meta">
+                                <strong>Supporter mode</strong>
+                                <span>Cosmetic extras and tasteful donor perks without pay-to-win.</span>
+                            </div>
+                            <input id="settingSupporter" type="checkbox">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-meta">
+                                <strong>Nearby radar</strong>
+                                <span>Opt-in 10 km proximity radar for nearby Senpixel users.</span>
+                            </div>
+                            <input id="settingRadar" type="checkbox">
+                        </div>
+                    </div>
+                    <div class="auth-grid" style="margin-top: 18px;">
+                        <div class="field-row">
+                            <div class="field">
+                                <label for="profileAvatarInput">Avatar emoji</label>
+                                <input id="profileAvatarInput" type="text" maxlength="8" autocomplete="off" placeholder="S">
+                            </div>
+                            <div class="field">
+                                <label for="profileEmojiInput">Status emoji</label>
+                                <input id="profileEmojiInput" type="text" maxlength="8" autocomplete="off" placeholder="⚡">
+                            </div>
+                            <div class="field">
+                                <label for="profileStatusInput">Status text</label>
+                                <input id="profileStatusInput" type="text" maxlength="64" autocomplete="off" placeholder="Locked in">
+                            </div>
+                        </div>
+                        <button id="saveProfileButton" class="btn btn-secondary" type="button">Save Profile</button>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <p class="section-kicker">supporter</p>
+                    <div class="supporter-grid">
+                        <div class="supporter-card">
+                            <strong id="supporterTitle">Supporter features</strong>
+                            <p id="supporterDescription">Optional donor perks stay cosmetic-first. Core messaging remains free.</p>
+                        </div>
+                        <div class="action-row">
+                            <button id="refreshRadarButton" class="btn btn-secondary" type="button">Refresh Radar</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <p class="section-kicker">nearby</p>
+                    <div id="radarPanel" class="radar-grid"></div>
+                </section>
+
+                <section class="panel">
+                    <p class="section-kicker">protocol</p>
+                    <div id="protocolList" class="protocol-list"></div>
+                </section>
+            </aside>
+        </main>
+
+        <div id="toastRack" class="toast-rack"></div>
+    </div>
+
+    <script>
+        (() => {
+            const STORAGE = {
+                identity: "senpixel.identity.v2",
+                settings: "senpixel.settings.v2",
+                roomSecrets: "senpixel.room-secrets.v2",
+                saved: "senpixel.saved.v2",
+                drafts: "senpixel.drafts.v2",
+                nickname: "senpixel.nickname.v2",
+                room: "senpixel.room.v2",
+                protocol: "senpixel.protocol.v2",
+                roomFavorites: "senpixel.room-favorites.v2",
+            };
+
+            const DEFAULT_SETTINGS = {
+                language: "auto",
+                theme: "nebula",
+                motion: true,
+                compact: false,
+                sounds: false,
+                timestamps: true,
+                verified: true,
+                focus: false,
+                supporter: false,
+                radar: false,
+            };
+
+            const USERNAME_RE = /^(?=.{2,24}$)[\p{L}\p{N}_.\- ]+$/u;
+            const MAX_ATTACHMENTS = 4;
+            const MAX_ATTACHMENT_BYTES = 180 * 1024;
+            const textEncoder = new TextEncoder();
+            const textDecoder = new TextDecoder();
+
+            const refs = {
+                body: document.body,
+                entryScreen: document.getElementById("entryScreen"),
+                enterMessengerButton: document.getElementById("enterMessengerButton"),
+                showOsButton: document.getElementById("showOsButton"),
+                osNotice: document.getElementById("osNotice"),
+                authOverlay: document.getElementById("authOverlay"),
+                authForm: document.getElementById("authForm"),
+                authNickname: document.getElementById("authNickname"),
+                authRoom: document.getElementById("authRoom"),
+                authSecret: document.getElementById("authSecret"),
+                authAvatarEmoji: document.getElementById("authAvatarEmoji"),
+                authStatusEmoji: document.getElementById("authStatusEmoji"),
+                authStatusText: document.getElementById("authStatusText"),
+                authRemember: document.getElementById("authRemember"),
+                authSubmitButton: document.getElementById("authSubmitButton"),
+                commandOverlay: document.getElementById("commandOverlay"),
+                commandSearch: document.getElementById("commandSearch"),
+                commandList: document.getElementById("commandList"),
+                workspace: document.getElementById("workspace"),
+                serverOfflineNotice: document.getElementById("serverOfflineNotice"),
+                relayBadge: document.getElementById("relayBadge"),
+                profileSummary: document.getElementById("profileSummary"),
+                searchInput: document.getElementById("searchInput"),
+                filterBar: document.getElementById("filterBar"),
+                roomList: document.getElementById("roomList"),
+                roomSecretForm: document.getElementById("roomSecretForm"),
+                roomSecretInput: document.getElementById("roomSecretInput"),
+                roomRememberInput: document.getElementById("roomRememberInput"),
+                clearRoomSecretButton: document.getElementById("clearRoomSecretButton"),
+                createRoomForm: document.getElementById("createRoomForm"),
+                createRoomTitle: document.getElementById("createRoomTitle"),
+                createRoomDescription: document.getElementById("createRoomDescription"),
+                activeRoomTitle: document.getElementById("activeRoomTitle"),
+                activeRoomMeta: document.getElementById("activeRoomMeta"),
+                inviteRoomButton: document.getElementById("inviteRoomButton"),
+                favoriteRoomButton: document.getElementById("favoriteRoomButton"),
+                openCommandDeckButton: document.getElementById("openCommandDeckButton"),
+                showSavedButton: document.getElementById("showSavedButton"),
+                clearSavedFilterButton: document.getElementById("clearSavedFilterButton"),
+                pinStrip: document.getElementById("pinStrip"),
+                typingStrip: document.getElementById("typingStrip"),
+                lockedStrip: document.getElementById("lockedStrip"),
+                messageList: document.getElementById("messageList"),
+                replyStrip: document.getElementById("replyStrip"),
+                composeModeLabel: document.getElementById("composeModeLabel"),
+                composeFingerprint: document.getElementById("composeFingerprint"),
+                composeModeSelect: document.getElementById("composeModeSelect"),
+                codeLanguageField: document.getElementById("codeLanguageField"),
+                codeLanguageInput: document.getElementById("codeLanguageInput"),
+                ttlSelect: document.getElementById("ttlSelect"),
+                composeInput: document.getElementById("composeInput"),
+                attachmentInput: document.getElementById("attachmentInput"),
+                attachmentPreview: document.getElementById("attachmentPreview"),
+                attachButton: document.getElementById("attachButton"),
+                clearAttachmentsButton: document.getElementById("clearAttachmentsButton"),
+                sendButton: document.getElementById("sendButton"),
+                cancelComposeModeButton: document.getElementById("cancelComposeModeButton"),
+                safetyCenter: document.getElementById("safetyCenter"),
+                membersList: document.getElementById("membersList"),
+                savedList: document.getElementById("savedList"),
+                languageSelect: document.getElementById("languageSelect"),
+                themeSelect: document.getElementById("themeSelect"),
+                settingMotion: document.getElementById("settingMotion"),
+                settingCompact: document.getElementById("settingCompact"),
+                settingSound: document.getElementById("settingSound"),
+                settingTimestamps: document.getElementById("settingTimestamps"),
+                settingVerified: document.getElementById("settingVerified"),
+                settingFocus: document.getElementById("settingFocus"),
+                settingSupporter: document.getElementById("settingSupporter"),
+                settingRadar: document.getElementById("settingRadar"),
+                profileAvatarInput: document.getElementById("profileAvatarInput"),
+                profileEmojiInput: document.getElementById("profileEmojiInput"),
+                profileStatusInput: document.getElementById("profileStatusInput"),
+                saveProfileButton: document.getElementById("saveProfileButton"),
+                supporterTitle: document.getElementById("supporterTitle"),
+                supporterDescription: document.getElementById("supporterDescription"),
+                refreshRadarButton: document.getElementById("refreshRadarButton"),
+                radarPanel: document.getElementById("radarPanel"),
+                protocolList: document.getElementById("protocolList"),
+                toastRack: document.getElementById("toastRack"),
+            };
+
+            const persistedSecrets = loadJson(STORAGE.roomSecrets, {});
+
+            const state = {
+                user: "",
+                ready: false,
+                socket: null,
+                socketState: "offline",
+                serverAvailable: true,
+                socketReconnectTimer: null,
+                healthTimer: null,
+                pingTimer: null,
+                typingTimer: null,
+                typingSent: false,
+                settings: { ...DEFAULT_SETTINGS, ...loadJson(STORAGE.settings, {}) },
+                rooms: [],
+                messages: [],
+                pins: {},
+                identities: {},
+                online: [],
+                limits: {
+                    max_ttl_seconds: 86400,
+                    default_ttl_seconds: 3600,
+                    max_ciphertext_length: 8192,
+                },
+                activeRoomId: "",
+                filter: "all",
+                search: "",
+                replyTo: null,
+                editingId: null,
+                unread: {},
+                saved: new Set(loadJson(STORAGE.saved, [])),
+                drafts: loadJson(STORAGE.drafts, {}),
+                roomSecrets: { ...persistedSecrets },
+                persistedSecrets: { ...persistedSecrets },
+                roomFavorites: new Set(loadJson(STORAGE.roomFavorites, [])),
+                protocol: loadJson(STORAGE.protocol, []).slice(0, 20),
+                typingByRoom: {},
+                identity: null,
+                publicKeyCache: new Map(),
+                inspectCache: new Map(),
+                renderToken: 0,
+                highlightMessageId: "",
+                pendingLaunch: null,
+                profile: {
+                    avatar_emoji: "",
+                    status_emoji: "",
+                    status_text: "",
+                    supporter_tier: "",
+                    location_visible: false,
+                    location_lat: null,
+                    location_lon: null,
+                    location_updated_at: "",
+                },
+                audioContext: null,
+                composeMode: "text",
+                composeLanguage: "",
+                composeAttachments: [],
+                resolvedLanguage: "en",
+            };
+
+            const COMMANDS = [
+                {
+                    id: "focus-compose",
+                    label: "Focus composer",
+                    description: "Jump straight to the message box.",
+                    run() {
+                        closeCommandDeck();
+                        refs.composeInput.focus();
+                    },
+                },
+                {
+                    id: "saved-filter",
+                    label: "Open saved",
+                    description: "Switch the feed filter to saved messages.",
+                    run() {
+                        closeCommandDeck();
+                        setFilter("saved");
+                    },
+                },
+                {
+                    id: "unlock-room",
+                    label: "Unlock room",
+                    description: "Focus the active room key input.",
+                    run() {
+                        closeCommandDeck();
+                        refs.roomSecretInput.focus();
+                    },
+                },
+                {
+                    id: "focus-mode",
+                    label: "Toggle focus mode",
+                    description: "Hide or show the right rail.",
+                    run() {
+                        closeCommandDeck();
+                        updateSetting("focus", !state.settings.focus);
+                    },
+                },
+                {
+                    id: "clear-search",
+                    label: "Clear search",
+                    description: "Reset message search instantly.",
+                    run() {
+                        closeCommandDeck();
+                        refs.searchInput.value = "";
+                        state.search = "";
+                        void renderMessages();
+                    },
+                },
+                {
+                    id: "main-room",
+                    label: "Go to main room",
+                    description: "Open the first available room.",
+                    run() {
+                        closeCommandDeck();
+                        const firstRoom = state.rooms[0];
+                        if (firstRoom) setActiveRoom(firstRoom.id, { scrollBottom: true });
+                    },
+                },
+                {
+                    id: "new-room",
+                    label: "Create room",
+                    description: "Focus the room creation form.",
+                    run() {
+                        closeCommandDeck();
+                        refs.createRoomTitle.focus();
+                    },
+                },
+            ];
+
+            refs.authNickname.value = localStorage.getItem(STORAGE.nickname) || "";
+            refs.authRemember.checked = true;
+
+            applySettings();
+            renderSettingsForm();
+            renderComposeModeControls();
+            renderComposerAttachments();
+            renderCommandList();
+            renderProtocol();
+            renderSaved();
+
+            refs.enterMessengerButton.addEventListener("click", openMessengerEntry);
+            refs.showOsButton.addEventListener("click", () => {
+                refs.osNotice.classList.remove("hidden");
+            });
+
+            refs.authForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                await bootSession({
+                    nickname: refs.authNickname.value,
+                    roomId: refs.authRoom.value,
+                    roomSecret: refs.authSecret.value,
+                    rememberSecret: refs.authRemember.checked,
+                    avatarEmoji: refs.authAvatarEmoji.value,
+                    statusEmoji: refs.authStatusEmoji.value,
+                    statusText: refs.authStatusText.value,
+                });
+            });
+
+            refs.searchInput.addEventListener("input", () => {
+                state.search = refs.searchInput.value.trim().toLowerCase();
+                void renderMessages();
+            });
+
+            refs.filterBar.addEventListener("click", (event) => {
+                const button = event.target.closest("[data-filter]");
+                if (!button) return;
+                setFilter(button.dataset.filter);
+            });
+
+            refs.roomList.addEventListener("click", (event) => {
+                const button = event.target.closest("[data-room]");
+                if (!button) return;
+                setActiveRoom(button.dataset.room, { scrollBottom: true });
+            });
+
+            refs.roomSecretForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                if (!state.activeRoomId) return;
+                const secret = refs.roomSecretInput.value;
+                if (!secret.trim()) {
+                    toast("Room key is empty.", "warning");
+                    return;
+                }
+                saveRoomSecret(state.activeRoomId, secret, refs.roomRememberInput.checked);
+                state.inspectCache.clear();
+                logProtocol(`Room key loaded for ${getCurrentRoom()?.title || "room"}`);
+                toast("Room unlocked.");
+                void renderActiveRoom();
+            });
+
+            refs.clearRoomSecretButton.addEventListener("click", () => {
+                if (!state.activeRoomId) return;
+                delete state.roomSecrets[state.activeRoomId];
+                delete state.persistedSecrets[state.activeRoomId];
+                saveJson(STORAGE.roomSecrets, state.persistedSecrets);
+                refs.roomSecretInput.value = "";
+                refs.roomRememberInput.checked = false;
+                state.inspectCache.clear();
+                logProtocol(`Room key cleared for ${getCurrentRoom()?.title || "room"}`);
+                void renderActiveRoom();
+            });
+
+            refs.createRoomForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                const title = refs.createRoomTitle.value.trim();
+                const description = refs.createRoomDescription.value.trim();
+                if (!title) {
+                    toast("Room title is required.", "warning");
+                    return;
+                }
+                sendSocket("CREATE_ROOM", { title, description });
+                refs.createRoomTitle.value = "";
+                refs.createRoomDescription.value = "";
+                logProtocol(`Room request sent: ${title}`);
+            });
+
+            refs.inviteRoomButton.addEventListener("click", shareActiveRoom);
+            refs.favoriteRoomButton.addEventListener("click", toggleFavoriteRoom);
+            refs.openCommandDeckButton.addEventListener("click", openCommandDeck);
+            refs.showSavedButton.addEventListener("click", () => setFilter("saved"));
+            refs.clearSavedFilterButton.addEventListener("click", () => setFilter("all"));
+
+            refs.commandOverlay.addEventListener("click", (event) => {
+                if (event.target === refs.commandOverlay) closeCommandDeck();
+            });
+
+            refs.commandSearch.addEventListener("input", renderCommandList);
+            refs.commandList.addEventListener("click", (event) => {
+                const button = event.target.closest("[data-command]");
+                if (!button) return;
+                const command = COMMANDS.find((entry) => entry.id === button.dataset.command);
+                if (command) command.run();
+            });
+
+            refs.composeInput.addEventListener("input", () => {
+                if (!state.activeRoomId) return;
+                persistActiveDraft();
+                queueTyping();
+            });
+
+            refs.composeModeSelect.addEventListener("change", () => {
+                state.composeMode = refs.composeModeSelect.value;
+                renderComposeModeControls();
+                persistActiveDraft();
+            });
+
+            refs.codeLanguageInput.addEventListener("input", () => {
+                state.composeLanguage = refs.codeLanguageInput.value.trim();
+                persistActiveDraft();
+            });
+
+            refs.attachButton.addEventListener("click", () => {
+                refs.attachmentInput.click();
+            });
+
+            refs.attachmentInput.addEventListener("change", async () => {
+                const files = [...(refs.attachmentInput.files || [])];
+                if (files.length) {
+                    await addFilesToComposer(files);
+                }
+                refs.attachmentInput.value = "";
+            });
+
+            refs.clearAttachmentsButton.addEventListener("click", () => {
+                state.composeAttachments = [];
+                renderComposerAttachments();
+            });
+
+            refs.composeInput.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void submitComposer();
+                }
+            });
+
+            refs.composeInput.addEventListener("paste", (event) => {
+                const files = [...(event.clipboardData?.files || [])];
+                if (files.length) {
+                    event.preventDefault();
+                    void addFilesToComposer(files);
+                }
+            });
+
+            refs.sendButton.addEventListener("click", () => {
+                void submitComposer();
+            });
+
+            refs.cancelComposeModeButton.addEventListener("click", () => {
+                clearComposerModes();
+            });
+
+            refs.messageList.addEventListener("click", (event) => {
+                const button = event.target.closest("[data-action]");
+                if (!button) return;
+                const action = button.dataset.action;
+                const messageId = button.dataset.message || "";
+                const roomId = button.dataset.room || state.activeRoomId;
+
+                if (!messageId && action !== "jump-room") return;
+
+                if (action === "reply") {
+                    startReply(messageId);
+                    return;
+                }
+                if (action === "save") {
+                    toggleSaved(messageId);
+                    return;
+                }
+                if (action === "react") {
+                    promptReaction(messageId, roomId);
+                    return;
+                }
+                if (action === "pin") {
+                    sendSocket("PIN_MESSAGE", { room_id: roomId, message_id: messageId });
+                    return;
+                }
+                if (action === "burn") {
+                    burnMessage(messageId);
+                    return;
+                }
+                if (action === "edit") {
+                    void startEdit(messageId);
+                    return;
+                }
+                if (action === "jump") {
+                    jumpToMessage(messageId, roomId);
+                    return;
+                }
+                if (action === "toggle-reaction") {
+                    sendSocket("REACT", {
+                        room_id: roomId,
+                        message_id: messageId,
+                        emoji: button.dataset.emoji || "",
+                    });
+                    return;
+                }
+                if (action === "copy-invite") {
+                    shareActiveRoom();
+                }
+            });
+
+            refs.pinStrip.addEventListener("click", (event) => {
+                const button = event.target.closest("[data-action='jump']");
+                if (!button) return;
+                jumpToMessage(button.dataset.message, button.dataset.room);
+            });
+
+            refs.attachmentPreview.addEventListener("click", (event) => {
+                const button = event.target.closest("[data-remove-attachment]");
+                if (!button) return;
+                state.composeAttachments = state.composeAttachments.filter((item) => item.id !== button.dataset.removeAttachment);
+                renderComposerAttachments();
+            });
+
+            refs.savedList.addEventListener("click", (event) => {
+                const button = event.target.closest("[data-jump-message]");
+                if (!button) return;
+                jumpToMessage(button.dataset.jumpMessage, button.dataset.jumpRoom);
+            });
+
+            refs.themeSelect.addEventListener("change", () => updateSetting("theme", refs.themeSelect.value));
+            refs.settingMotion.addEventListener("change", () => updateSetting("motion", refs.settingMotion.checked));
+            refs.settingCompact.addEventListener("change", () => updateSetting("compact", refs.settingCompact.checked));
+            refs.settingSound.addEventListener("change", () => updateSetting("sounds", refs.settingSound.checked));
+            refs.settingTimestamps.addEventListener("change", () => updateSetting("timestamps", refs.settingTimestamps.checked));
+            refs.settingVerified.addEventListener("change", () => updateSetting("verified", refs.settingVerified.checked));
+            refs.settingFocus.addEventListener("change", () => updateSetting("focus", refs.settingFocus.checked));
+
+            refs.saveProfileButton.addEventListener("click", () => {
+                state.profile.avatar_emoji = refs.profileAvatarInput.value.trim();
+                state.profile.status_emoji = refs.profileEmojiInput.value.trim();
+                state.profile.status_text = refs.profileStatusInput.value.trim();
+                if (state.ready) {
+                    sendSocket("UPDATE_PROFILE", {
+                        avatar_emoji: state.profile.avatar_emoji,
+                        status_emoji: state.profile.status_emoji,
+                        status_text: state.profile.status_text,
+                    });
+                    logProtocol("Profile status updated.");
+                    toast("Profile saved.");
+                }
+            });
+
+            document.addEventListener("keydown", (event) => {
+                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+                    event.preventDefault();
+                    if (refs.commandOverlay.classList.contains("hidden")) {
+                        openCommandDeck();
+                    } else {
+                        closeCommandDeck();
+                    }
+                    return;
+                }
+
+                if (event.key === "Escape") {
+                    if (!refs.commandOverlay.classList.contains("hidden")) {
+                        closeCommandDeck();
+                        return;
+                    }
+                    if (state.replyTo || state.editingId) {
+                        clearComposerModes();
+                    }
+                    return;
+                }
+
+                if (event.key === "/" && !isTypingIntoField(event.target)) {
+                    event.preventDefault();
+                    refs.searchInput.focus();
+                }
+            });
+
+            window.addEventListener("beforeunload", () => {
+                stopTyping(true);
+                if (state.socket && state.socket.readyState === WebSocket.OPEN) {
+                    state.socket.close();
+                }
+            });
+
+            hydrateLaunch();
+
+            function loadJson(key, fallback) {
+                try {
+                    const raw = localStorage.getItem(key);
+                    return raw ? JSON.parse(raw) : fallback;
+                } catch {
+                    return fallback;
+                }
+            }
+
+            function saveJson(key, value) {
+                localStorage.setItem(key, JSON.stringify(value));
+            }
+
+            function openMessengerEntry() {
+                refs.entryScreen.classList.add("hidden");
+                refs.authOverlay.classList.remove("hidden");
+                refs.authNickname.focus();
+            }
+
+            function openCommandDeck() {
+                refs.commandOverlay.classList.remove("hidden");
+                refs.commandSearch.value = "";
+                renderCommandList();
+                refs.commandSearch.focus();
+            }
+
+            function closeCommandDeck() {
+                refs.commandOverlay.classList.add("hidden");
+            }
+
+            function renderComposeModeControls() {
+                refs.composeModeSelect.value = state.composeMode;
+                refs.codeLanguageField.classList.toggle("hidden", state.composeMode !== "code");
+            }
+
+            function renderComposerAttachments() {
+                refs.attachmentPreview.classList.toggle("hidden", state.composeAttachments.length === 0);
+                refs.clearAttachmentsButton.classList.toggle("hidden", state.composeAttachments.length === 0);
+
+                if (!state.composeAttachments.length) {
+                    refs.attachmentPreview.innerHTML = "";
+                    persistActiveDraft();
+                    return;
+                }
+
+                refs.attachmentPreview.innerHTML = state.composeAttachments.map((item) => `
+                    <div class="attachment-item">
+                        ${item.kind === "image" ? `<img src="${escapeAttribute(item.data_url)}" alt="${escapeAttribute(item.name)}">` : ""}
+                        <div class="attachment-meta">
+                            <strong>${escapeHtml(item.name)}</strong>
+                            <span>${escapeHtml(formatBytes(item.size))}</span>
+                            <button class="btn btn-ghost" type="button" data-remove-attachment="${item.id}">Remove</button>
+                        </div>
+                    </div>
+                `).join("");
+
+                persistActiveDraft();
+            }
+
+            function persistActiveDraft() {
+                if (!state.activeRoomId) return;
+                state.drafts[state.activeRoomId] = {
+                    text: refs.composeInput.value,
+                    mode: state.composeMode,
+                    language: state.composeLanguage,
+                };
+                saveJson(STORAGE.drafts, state.drafts);
+            }
+
+            async function addFilesToComposer(files) {
+                if (!files.length) return;
+                if (state.composeAttachments.length + files.length > MAX_ATTACHMENTS) {
+                    toast(`You can attach up to ${MAX_ATTACHMENTS} files.`, "warning");
+                    return;
+                }
+
+                const currentBytes = state.composeAttachments.reduce((sum, item) => sum + item.size, 0);
+                const nextBytes = files.reduce((sum, file) => sum + file.size, currentBytes);
+                if (nextBytes > MAX_ATTACHMENT_BYTES) {
+                    toast(`Attachments are limited to ${formatBytes(MAX_ATTACHMENT_BYTES)} total.`, "warning");
+                    return;
+                }
+
+                const loaded = [];
+                for (const file of files) {
+                    const dataUrl = await readFileAsDataUrl(file);
+                    loaded.push({
+                        id: crypto.randomUUID(),
+                        name: file.name || "attachment",
+                        mime: file.type || "application/octet-stream",
+                        size: file.size || 0,
+                        kind: file.type.startsWith("image/") ? "image" : "file",
+                        data_url: dataUrl,
+                    });
+                }
+
+                state.composeAttachments.push(...loaded);
+                renderComposerAttachments();
+                toast(`${loaded.length} attachment${loaded.length > 1 ? "s" : ""} added.`);
+            }
+
+            function readFileAsDataUrl(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(String(reader.result || ""));
+                    reader.onerror = () => reject(new Error(`Unable to read ${file.name}.`));
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            async function shareActiveRoom() {
+                const room = getCurrentRoom();
+                if (!room) {
+                    toast("No active room.", "warning");
+                    return;
+                }
+
+                const invite = {
+                    brand: "Senpixel",
+                    room_id: room.id,
+                    room_title: room.title,
+                    room_secret: state.roomSecrets[room.id] || "",
+                    url: `${location.origin}/?room=${encodeURIComponent(room.id)}`,
+                };
+
+                const inviteText = JSON.stringify(invite, null, 2);
+                if (navigator.clipboard?.writeText) {
+                    try {
+                        await navigator.clipboard.writeText(inviteText);
+                        toast("Room invite copied.");
+                        return;
+                    } catch {
+                        // Fallback below.
+                    }
+                }
+                {
+                    window.prompt("Copy invite", inviteText);
+                }
+            }
+
+            function toggleFavoriteRoom() {
+                const room = getCurrentRoom();
+                if (!room) return;
+                if (state.roomFavorites.has(room.id)) {
+                    state.roomFavorites.delete(room.id);
+                    toast("Room removed from favorites.");
+                } else {
+                    state.roomFavorites.add(room.id);
+                    toast("Room added to favorites.");
+                }
+                saveJson(STORAGE.roomFavorites, [...state.roomFavorites]);
+                renderActiveHeader();
+                renderRoomList();
+            }
+
+            function renderCommandList() {
+                const query = refs.commandSearch.value.trim().toLowerCase();
+                const visibleCommands = COMMANDS.filter((command) => {
+                    if (!query) return true;
+                    return `${command.label} ${command.description}`.toLowerCase().includes(query);
+                });
+
+                refs.commandList.innerHTML = visibleCommands.map((command) => `
+                    <button class="command-item" type="button" data-command="${command.id}">
+                        <strong>${escapeHtml(command.label)}</strong>
+                        <small>${escapeHtml(command.description)}</small>
+                    </button>
+                `).join("") || `<div class="empty-state">No matching actions.</div>`;
+            }
+
+            async function hydrateLaunch() {
+                const params = new URLSearchParams(location.search);
+                const token = params.get("launch");
+                const roomHint = params.get("room");
+                if (roomHint) {
+                    refs.authRoom.value = roomHint;
+                }
+                if (!token) return;
+
+                try {
+                    const payload = await fetchJson(`/api/launch/${encodeURIComponent(token)}`);
+                    state.pendingLaunch = payload;
+                    refs.authNickname.value = payload.nickname || refs.authNickname.value;
+                    refs.authRoom.value = payload.room_id || "";
+                    refs.authSecret.value = payload.room_secret || "";
+                    refs.authRemember.checked = Boolean(payload.remember_secret);
+                    openMessengerEntry();
+                    if (payload.nickname && payload.auto_start) {
+                        refs.authForm.requestSubmit();
+                    }
+                } catch (error) {
+                    toast(error.message || "Launch token expired.", "warning");
+                } finally {
+                    history.replaceState({}, "", location.pathname);
+                }
+            }
+
+            async function bootSession({ nickname, roomId, roomSecret, rememberSecret, avatarEmoji, statusEmoji, statusText }) {
+                const cleanUser = normalizeNickname(nickname);
+                if (!cleanUser) {
+                    toast("Nickname must be 2-24 chars with letters, numbers, spaces, dots, dashes or underscores.", "warning");
+                    return;
+                }
+
+                refs.authSubmitButton.disabled = true;
+                refs.authSubmitButton.textContent = "Connecting...";
+
+                try {
+                    if (!window.crypto?.subtle) {
+                        throw new Error("Web Crypto is not available in this browser.");
+                    }
+
+                    localStorage.setItem(STORAGE.nickname, cleanUser);
+                    state.user = cleanUser;
+                    state.profile.avatar_emoji = String(avatarEmoji || "").trim();
+                    state.profile.status_emoji = String(statusEmoji || "").trim();
+                    state.profile.status_text = String(statusText || "").trim();
+
+                    await ensureIdentity();
+                    const bootstrap = await fetchJson(`/api/bootstrap/${encodeURIComponent(cleanUser)}`);
+
+                    state.rooms = Array.isArray(bootstrap.rooms) ? bootstrap.rooms : [];
+                    state.messages = Array.isArray(bootstrap.messages) ? bootstrap.messages : [];
+                    state.pins = bootstrap.pins || {};
+                    state.identities = bootstrap.identities || {};
+                    state.online = Array.isArray(bootstrap.online) ? bootstrap.online : [];
+                    state.limits = bootstrap.limits || state.limits;
+                    state.inspectCache.clear();
+
+                    const wantedRoom = String(roomId || state.pendingLaunch?.room_id || "").trim();
+                    const previousRoom = localStorage.getItem(STORAGE.room) || "";
+                    const roomIds = new Set(state.rooms.map((room) => room.id));
+                    let nextRoom = "";
+                    if (wantedRoom && roomIds.has(wantedRoom)) {
+                        nextRoom = wantedRoom;
+                    } else if (previousRoom && roomIds.has(previousRoom)) {
+                        nextRoom = previousRoom;
+                    } else {
+                        nextRoom = state.rooms[0]?.id || "";
+                    }
+
+                    if (wantedRoom && !roomIds.has(wantedRoom)) {
+                        toast("Requested room was not found. Opened the main room instead.", "warning");
+                    }
+
+                    state.activeRoomId = nextRoom;
+                    state.ready = true;
+                    refs.authOverlay.classList.add("hidden");
+                    refs.entryScreen.classList.add("hidden");
+                    refs.workspace.classList.remove("hidden");
+
+                    if (roomSecret) {
+                        const targetRoomId = nextRoom;
+                        if (targetRoomId) {
+                            saveRoomSecret(targetRoomId, roomSecret, rememberSecret);
+                        }
+                    }
+
+                    refs.profileAvatarInput.value = state.profile.avatar_emoji;
+                    refs.profileEmojiInput.value = state.profile.status_emoji;
+                    refs.profileStatusInput.value = state.profile.status_text;
+                    refs.composeFingerprint.textContent = shortFingerprint(state.identity?.deviceId || "unsigned");
+
+                    bindDraftForActiveRoom();
+                    renderRelayBadge();
+                    void renderActiveRoom();
+                    connectSocket();
+                    logProtocol(`Session started as ${cleanUser}.`);
+                } catch (error) {
+                    toast(error.message || "Unable to open Senpixel.", "error");
+                } finally {
+                    refs.authSubmitButton.disabled = false;
+                    refs.authSubmitButton.textContent = "Enter Messenger";
+                }
+            }
+
+            async function ensureIdentity() {
+                try {
+                    const stored = loadJson(STORAGE.identity, null);
+                    if (stored?.deviceId && stored?.publicJwk && stored?.privateJwk) {
+                        const privateKey = await crypto.subtle.importKey(
+                            "jwk",
+                            stored.privateJwk,
+                            { name: "ECDSA", namedCurve: "P-256" },
+                            true,
+                            ["sign"]
+                        );
+                        const publicKey = await crypto.subtle.importKey(
+                            "jwk",
+                            stored.publicJwk,
+                            { name: "ECDSA", namedCurve: "P-256" },
+                            true,
+                            ["verify"]
+                        );
+
+                        state.identity = {
+                            deviceId: stored.deviceId,
+                            publicJwk: stored.publicJwk,
+                            privateJwk: stored.privateJwk,
+                            privateKey,
+                            publicKey,
+                        };
+                        return;
+                    }
+                } catch {
+                    localStorage.removeItem(STORAGE.identity);
+                }
+
+                const pair = await crypto.subtle.generateKey(
+                    { name: "ECDSA", namedCurve: "P-256" },
+                    true,
+                    ["sign", "verify"]
+                );
+
+                const publicJwk = await crypto.subtle.exportKey("jwk", pair.publicKey);
+                const privateJwk = await crypto.subtle.exportKey("jwk", pair.privateKey);
+                const deviceId = `sen-${crypto.randomUUID().slice(0, 16)}`;
+                saveJson(STORAGE.identity, { deviceId, publicJwk, privateJwk });
+
+                state.identity = {
+                    deviceId,
+                    publicJwk,
+                    privateJwk,
+                    privateKey: pair.privateKey,
+                    publicKey: pair.publicKey,
+                };
+            }
+
+            function connectSocket() {
+                if (!state.user) return;
+                clearTimeout(state.socketReconnectTimer);
+
+                const protocol = location.protocol === "https:" ? "wss" : "ws";
+                const socket = new WebSocket(`${protocol}://${location.host}/ws/${encodeURIComponent(state.user)}`);
+                state.socket = socket;
+                state.socketState = "connecting";
+                renderRelayBadge();
+                renderProfileSummary();
+
+                socket.addEventListener("open", () => {
+                    if (state.socket !== socket) return;
+                    state.socketState = "online";
+                    renderRelayBadge();
+                    renderProfileSummary();
+                    announceIdentity();
+                    sendSocket("UPDATE_PROFILE", state.profile);
+                    startPingLoop();
+                    logProtocol("Relay connected.");
+                });
+
+                socket.addEventListener("message", async (event) => {
+                    if (state.socket !== socket) return;
+                    let packet;
+                    try {
+                        packet = JSON.parse(String(event.data));
+                    } catch {
+                        return;
+                    }
+                    await handlePacket(packet);
+                });
+
+                socket.addEventListener("close", () => {
+                    if (state.socket !== socket) return;
+                    stopPingLoop();
+                    state.socketState = "offline";
+                    renderRelayBadge();
+                    renderProfileSummary();
+                    if (state.ready) {
+                        logProtocol("Relay disconnected. Reconnecting...");
+                        state.socketReconnectTimer = setTimeout(connectSocket, 1800);
+                    }
+                });
+            }
+
+            function announceIdentity() {
+                if (!state.identity) return;
+                sendSocket("ANNOUNCE_IDENTITY", {
+                    device_id: state.identity.deviceId,
+                    public_key: JSON.stringify(state.identity.publicJwk),
+                });
+            }
+
+            async function handlePacket(packet) {
+                switch (packet.type) {
+                    case "PRESENCE":
+                        state.online = Array.isArray(packet.online) ? packet.online : [];
+                        renderProfileSummary();
+                        renderMembers();
+                        renderActiveHeader();
+                        return;
+                    case "IDENTITY_UPDATED":
+                        if (packet.identity?.name) {
+                            state.identities[packet.identity.name] = packet.identity;
+                            if (packet.identity.name === state.user) {
+                                state.profile.avatar_emoji = packet.identity.avatar_emoji || state.profile.avatar_emoji;
+                                state.profile.status_emoji = packet.identity.status_emoji || state.profile.status_emoji;
+                                state.profile.status_text = packet.identity.status_text || state.profile.status_text;
+                                refs.profileAvatarInput.value = packet.identity.avatar_emoji || "";
+                                refs.profileEmojiInput.value = packet.identity.status_emoji || "";
+                                refs.profileStatusInput.value = packet.identity.status_text || "";
+                            }
+                            renderProfileSummary();
+                            renderMembers();
+                            renderSafetyCenter();
+                        }
+                        return;
+                    case "ROOM_CREATED":
+                        if (packet.room && !state.rooms.some((room) => room.id === packet.room.id)) {
+                            state.rooms.push(packet.room);
+                            logProtocol(`Room created: ${packet.room.title}`);
+                            renderRoomList();
+                            if (!state.activeRoomId) {
+                                setActiveRoom(packet.room.id, { scrollBottom: true });
+                            }
+                        }
+                        return;
+                    case "TYPING_STATUS":
+                        updateTyping(packet.room_id, packet.user, Boolean(packet.active));
+                        return;
+                    case "MESSAGE_CREATED":
+                        upsertMessage(packet.message);
+                        if (packet.message?.sender !== state.user && packet.message?.room_id !== state.activeRoomId) {
+                            state.unread[packet.message.room_id] = (state.unread[packet.message.room_id] || 0) + 1;
+                        }
+                        if (packet.message?.sender !== state.user && state.settings.sounds) {
+                            playPulse();
+                        }
+                        logProtocol(`Message from ${packet.message?.sender || "unknown"}.`);
+                        renderRoomList();
+                        void renderActiveRoom(packet.message?.room_id === state.activeRoomId || packet.message?.sender === state.user);
+                        return;
+                    case "MESSAGE_UPDATED":
+                        upsertMessage(packet.message);
+                        logProtocol(`Message edited by ${packet.message?.sender || "unknown"}.`);
+                        void renderActiveRoom();
+                        return;
+                    case "REACTION_UPDATED":
+                        if (packet.message_id) {
+                            const target = state.messages.find((message) => message.id === packet.message_id);
+                            if (target) target.reactions = packet.reactions || [];
+                            void renderMessages();
+                        }
+                        return;
+                    case "PIN_UPDATED":
+                        if (packet.pin) {
+                            state.pins[packet.room_id] = packet.pin;
+                        } else {
+                            delete state.pins[packet.room_id];
+                        }
+                        logProtocol(`Pin updated in ${getRoomTitle(packet.room_id)}.`);
+                        void renderPinStrip();
+                        renderRoomList();
+                        return;
+                    case "MESSAGE_DELETED":
+                        state.messages = state.messages.filter((message) => message.id !== packet.message_id);
+                        state.saved.delete(packet.message_id);
+                        saveJson(STORAGE.saved, [...state.saved]);
+                        if (state.replyTo === packet.message_id || state.editingId === packet.message_id) {
+                            clearComposerModes();
+                        }
+                        logProtocol("Message burned.");
+                        void renderActiveRoom();
+                        return;
+                    case "ERROR":
+                        toast(packet.message || "Server error.", "error");
+                        return;
+                    case "PONG":
+                    case "BOOTSTRAP_HINT":
+                    default:
+                        return;
+                }
+            }
+
+            function sendSocket(type, payload = {}) {
+                if (!state.socket || state.socket.readyState !== WebSocket.OPEN) {
+                    toast("Relay is offline.", "warning");
+                    return false;
+                }
+                state.socket.send(JSON.stringify({ type, ...payload }));
+                return true;
+            }
+
+            function startPingLoop() {
+                stopPingLoop();
+                state.pingTimer = setInterval(() => {
+                    if (state.socket && state.socket.readyState === WebSocket.OPEN) {
+                        state.socket.send(JSON.stringify({ type: "PING" }));
+                    }
+                }, 25000);
+            }
+
+            function stopPingLoop() {
+                if (state.pingTimer) {
+                    clearInterval(state.pingTimer);
+                    state.pingTimer = null;
+                }
+            }
+
+            function updateTyping(roomId, user, active) {
+                if (!roomId || !user) return;
+                if (!state.typingByRoom[roomId]) state.typingByRoom[roomId] = {};
+                if (active) {
+                    state.typingByRoom[roomId][user] = Date.now() + 2600;
+                } else {
+                    delete state.typingByRoom[roomId][user];
+                }
+                renderTypingStrip();
+                setTimeout(renderTypingStrip, 2700);
+            }
+
+            function queueTyping() {
+                if (!state.activeRoomId || !state.ready) return;
+                if (!state.typingSent) {
+                    sendSocket("TYPING", { room_id: state.activeRoomId, active: true });
+                    state.typingSent = true;
+                }
+                clearTimeout(state.typingTimer);
+                state.typingTimer = setTimeout(() => stopTyping(false), 1200);
+            }
+
+            function stopTyping(force) {
+                clearTimeout(state.typingTimer);
+                if (!state.typingSent && !force) return;
+                const roomId = state.activeRoomId;
+                if (roomId && state.ready) {
+                    sendSocket("TYPING", { room_id: roomId, active: false });
+                }
+                state.typingSent = false;
+            }
+
+            function setFilter(filter) {
+                state.filter = filter;
+                [...refs.filterBar.querySelectorAll("[data-filter]")].forEach((button) => {
+                    button.classList.toggle("active", button.dataset.filter === filter);
+                });
+                void renderMessages();
+            }
+
+            function updateSetting(key, value) {
+                state.settings[key] = value;
+                saveJson(STORAGE.settings, state.settings);
+                applySettings();
+                renderSettingsForm();
+                void renderActiveRoom();
+                logProtocol(`Setting changed: ${key}.`);
+            }
+
+            function applySettings() {
+                refs.body.dataset.theme = state.settings.theme;
+                refs.body.classList.toggle("compact", Boolean(state.settings.compact));
+                refs.body.classList.toggle("reduce-motion", !state.settings.motion);
+                refs.body.classList.toggle("focus-mode", Boolean(state.settings.focus));
+            }
+
+            function renderSettingsForm() {
+                refs.themeSelect.value = state.settings.theme;
+                refs.settingMotion.checked = Boolean(state.settings.motion);
+                refs.settingCompact.checked = Boolean(state.settings.compact);
+                refs.settingSound.checked = Boolean(state.settings.sounds);
+                refs.settingTimestamps.checked = Boolean(state.settings.timestamps);
+                refs.settingVerified.checked = Boolean(state.settings.verified);
+                refs.settingFocus.checked = Boolean(state.settings.focus);
+            }
+
+            function renderRelayBadge() {
+                refs.relayBadge.textContent = state.socketState;
+                refs.relayBadge.className = "brand-badge";
+            }
+
+            function renderProfileSummary() {
+                if (!state.user) {
+                    refs.profileSummary.innerHTML = `
+                        ${renderAvatarMarkup("Senpixel", "S")}
+                        <div class="profile-meta">
+                            <strong>Senpixel</strong>
+                            <div class="muted">Ready for your session.</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const me = state.identities[state.user] || {};
+                const statusLine = [me.status_emoji, me.status_text].filter(Boolean).join(" ");
+                const presence = state.online.includes(state.user) ? "online" : state.socketState;
+
+                refs.profileSummary.innerHTML = `
+                    ${renderAvatarMarkup(state.user, me.avatar_emoji || state.profile.avatar_emoji)}
+                    <div class="profile-meta">
+                        <strong>${escapeHtml(state.user)}</strong>
+                        <div class="muted">${escapeHtml(statusLine || "No status set")}</div>
+                        <div class="stat-row" style="margin-top: 10px;">
+                            <span class="stat-pill">${escapeHtml(presence)}</span>
+                            <span class="stat-pill">${escapeHtml(shortFingerprint(state.identity?.deviceId || "device"))}</span>
+                            <span class="stat-pill">${state.online.length} online</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            async function renderActiveRoom(scrollBottom = false) {
+                renderProfileSummary();
+                renderRoomList();
+                renderMembers();
+                renderSafetyCenter();
+                renderActiveHeader();
+                renderRoomSecretForm();
+                renderComposerState();
+                renderTypingStrip();
+                await renderPinStrip();
+                await renderMessages(scrollBottom);
+                await renderSaved();
+            }
+
+            function renderActiveHeader() {
+                const room = getCurrentRoom();
+                if (!room) {
+                    refs.activeRoomTitle.textContent = "No room";
+                    refs.activeRoomMeta.textContent = "Create or open a room to start chatting.";
+                    refs.favoriteRoomButton.classList.remove("is-active");
+                    return;
+                }
+
+                document.documentElement.style.setProperty("--room-accent", room.accent || state.settings.accent || "#00d9ff");
+                const typingText = getTypingText(room.id);
+                const onlineText = `${state.online.length} online`;
+                refs.activeRoomTitle.textContent = room.title;
+                refs.activeRoomMeta.textContent = typingText ? `${room.description} • ${typingText}` : `${room.description} • ${onlineText}`;
+                refs.favoriteRoomButton.classList.toggle("is-active", state.roomFavorites.has(room.id));
+            }
+
+            function renderRoomList() {
+                if (!state.rooms.length) {
+                    refs.roomList.innerHTML = `<div class="empty-state">No rooms yet.</div>`;
+                    return;
+                }
+
+                const orderedRooms = [...state.rooms].sort((left, right) => {
+                    const leftFav = state.roomFavorites.has(left.id) ? 1 : 0;
+                    const rightFav = state.roomFavorites.has(right.id) ? 1 : 0;
+                    if (leftFav !== rightFav) return rightFav - leftFav;
+                    return left.title.localeCompare(right.title);
+                });
+
+                refs.roomList.innerHTML = orderedRooms.map((room) => {
+                    const active = room.id === state.activeRoomId;
+                    const unread = state.unread[room.id] || 0;
+                    const locked = !state.roomSecrets[room.id];
+                    const pin = state.pins[room.id];
+                    const favorite = state.roomFavorites.has(room.id);
+                    return `
+                        <button class="room-card ${active ? "active" : ""}" type="button" data-room="${room.id}">
+                            <div class="room-card-top">
+                                <span class="room-title">${escapeHtml(room.title)}</span>
+                                <span class="mini-pill">${favorite ? "fav • " : ""}${locked ? "locked" : "ready"}${unread ? ` • ${unread}` : ""}</span>
+                            </div>
+                            <div class="room-sub" style="margin-top: 10px;">${escapeHtml(room.description)}</div>
+                            ${pin ? `<div class="room-sub" style="margin-top: 10px;">Pinned activity live in this room.</div>` : ""}
+                        </button>
+                    `;
+                }).join("");
+            }
+
+            function renderRoomSecretForm() {
+                const roomId = state.activeRoomId;
+                refs.roomSecretInput.value = roomId ? state.roomSecrets[roomId] || "" : "";
+                refs.roomRememberInput.checked = Boolean(state.persistedSecrets[roomId]);
+            }
+
+            async function renderPinStrip() {
+                const roomId = state.activeRoomId;
+                const pin = roomId ? state.pins[roomId] : null;
+                if (!pin) {
+                    refs.pinStrip.classList.add("hidden");
+                    refs.pinStrip.innerHTML = "";
+                    return;
+                }
+
+                const message = state.messages.find((entry) => entry.id === pin.message_id);
+                if (!message) {
+                    refs.pinStrip.classList.add("hidden");
+                    refs.pinStrip.innerHTML = "";
+                    return;
+                }
+
+                const details = await inspectMessage(message);
+                refs.pinStrip.classList.remove("hidden");
+                refs.pinStrip.innerHTML = `
+                    <div class="room-card-top">
+                        <strong>Pinned</strong>
+                        <button class="btn btn-ghost" type="button" data-action="jump" data-message="${message.id}" data-room="${message.room_id}">Jump</button>
+                    </div>
+                    <div class="saved-sub" style="margin-top: 8px;">
+                        ${escapeHtml(message.sender)} • ${escapeHtml(details.preview)}
+                    </div>
+                `;
+            }
+
+            function renderTypingStrip() {
+                const text = getTypingText(state.activeRoomId);
+                if (!text) {
+                    refs.typingStrip.classList.add("hidden");
+                    refs.typingStrip.textContent = "";
+                    return;
+                }
+                refs.typingStrip.classList.remove("hidden");
+                refs.typingStrip.textContent = text;
+            }
+
+            async function renderMessages(scrollBottom = false) {
+                const room = getCurrentRoom();
+                const renderId = ++state.renderToken;
+                if (!room) {
+                    refs.messageList.innerHTML = `<div class="empty-state">No room selected.</div>`;
+                    return;
+                }
+
+                const roomMessages = state.messages
+                    .filter((message) => message.room_id === room.id)
+                    .sort((left, right) => left.created_at.localeCompare(right.created_at));
+
+                const inspected = await Promise.all(roomMessages.map(async (message) => ({
+                    message,
+                    details: await inspectMessage(message),
+                })));
+
+                if (renderId !== state.renderToken) return;
+
+                const inspectedMap = new Map(inspected.map((entry) => [entry.message.id, entry]));
+                const filtered = inspected.filter(({ message, details }) => {
+                    if (state.filter === "mine" && message.sender !== state.user) return false;
+                    if (state.filter === "saved" && !state.saved.has(message.id)) return false;
+                    if (state.filter === "verified" && !details.verified) return false;
+                    if (state.filter === "locked" && !details.locked) return false;
+                    if (!state.search) return true;
+                    const haystack = `${message.sender} ${details.searchText} ${details.preview}`.toLowerCase();
+                    return haystack.includes(state.search);
+                });
+
+                refs.lockedStrip.classList.toggle("hidden", Boolean(state.roomSecrets[room.id]));
+                refs.lockedStrip.textContent = state.roomSecrets[room.id]
+                    ? ""
+                    : "This room is locked. Load the room key to read or send messages.";
+
+                if (!filtered.length) {
+                    refs.messageList.innerHTML = `<div class="empty-state">No messages match the current room and filters.</div>`;
+                    return;
+                }
+
+                refs.messageList.innerHTML = filtered.map(({ message, details }) => {
+                    const isMine = message.sender === state.user;
+                    const saved = state.saved.has(message.id);
+                    const replySource = message.reply_to ? inspectedMap.get(message.reply_to) : null;
+                    const replyHtml = replySource ? `
+                        <div class="message-reply">
+                            Replying to ${escapeHtml(replySource.message.sender)}: ${escapeHtml(replySource.details.preview)}
+                        </div>
+                    ` : "";
+                    const verifiedLabel = details.verified ? "verified" : "unverified";
+                    const timeLabel = state.settings.timestamps ? formatClock(message.created_at) : "";
+                    const editedLabel = message.edited_at ? "edited" : "";
+                    const burnLabel = message.ttl_seconds ? `burn ${formatTtl(message.ttl_seconds)}` : "persistent";
+                    const reactions = Array.isArray(message.reactions) ? message.reactions : [];
+
+                    return `
+                        <article class="message-card ${isMine ? "mine" : ""} ${details.locked ? "locked" : ""} ${state.highlightMessageId === message.id ? "highlight" : ""}">
+                            <div class="message-top">
+                                <strong>${escapeHtml(message.sender)}</strong>
+                                <span class="mini-pill">${escapeHtml(timeLabel || burnLabel)}</span>
+                            </div>
+                            <div class="message-meta">
+                                <span>${escapeHtml(burnLabel)}</span>
+                                <span>${escapeHtml(verifiedLabel)}</span>
+                                ${editedLabel ? `<span>${escapeHtml(editedLabel)}</span>` : ""}
+                                ${saved ? `<span>saved</span>` : ""}
+                            </div>
+                            ${replyHtml}
+                            <div class="message-content">${details.locked ? escapeHtml(details.preview) : details.html}</div>
+                            ${renderReactionRow(reactions, message)}
+                            <div class="message-actions">
+                                <button type="button" data-action="reply" data-message="${message.id}">Reply</button>
+                                <button type="button" data-action="save" data-message="${message.id}">${saved ? "Unsave" : "Save"}</button>
+                                <button type="button" data-action="react" data-message="${message.id}" data-room="${message.room_id}">React</button>
+                                <button type="button" data-action="pin" data-message="${message.id}" data-room="${message.room_id}">Pin</button>
+                                ${isMine ? `<button type="button" data-action="edit" data-message="${message.id}">Edit</button>` : ""}
+                                ${isMine ? `<button type="button" data-action="burn" data-message="${message.id}">Burn</button>` : ""}
+                            </div>
+                        </article>
+                    `;
+                }).join("");
+
+                if (scrollBottom) {
+                    refs.messageList.scrollTop = refs.messageList.scrollHeight;
+                }
+
+                if (state.highlightMessageId) {
+                    requestAnimationFrame(() => {
+                        const target = refs.messageList.querySelector(".message-card.highlight");
+                        if (target) target.scrollIntoView({ block: "center", behavior: state.settings.motion ? "smooth" : "auto" });
+                        setTimeout(() => {
+                            state.highlightMessageId = "";
+                            target?.classList.remove("highlight");
+                        }, 1400);
+                    });
+                }
+            }
+
+            function renderReactionRow(reactions, message) {
+                if (!reactions.length) return "";
+                return `
+                    <div class="reaction-row">
+                        ${reactions.map((reaction) => {
+                            const active = reaction.users?.includes(state.user);
+                            return `
+                                <button
+                                    class="reaction-chip ${active ? "active" : ""}"
+                                    type="button"
+                                    data-action="toggle-reaction"
+                                    data-message="${message.id}"
+                                    data-room="${message.room_id}"
+                                    data-emoji="${escapeHtml(reaction.emoji)}"
+                                >
+                                    ${escapeHtml(reaction.emoji)} ${reaction.count}
+                                </button>
+                            `;
+                        }).join("")}
+                    </div>
+                `;
+            }
+
+            function renderComposerState() {
+                const secretLoaded = Boolean(state.roomSecrets[state.activeRoomId]);
+                refs.sendButton.disabled = !secretLoaded || !state.activeRoomId;
+                refs.composeInput.placeholder = secretLoaded
+                    ? "Write securely. Enter sends, Shift+Enter adds a line."
+                    : "Load a room key before sending.";
+                refs.composeModeLabel.textContent = state.editingId ? "Editing message" : state.replyTo ? "Reply mode" : "New message";
+                refs.cancelComposeModeButton.classList.toggle("hidden", !state.editingId && !state.replyTo);
+                renderComposeModeControls();
+
+                if (!state.replyTo && !state.editingId) {
+                    refs.replyStrip.classList.add("hidden");
+                    refs.replyStrip.innerHTML = "";
+                    return;
+                }
+
+                const targetId = state.editingId || state.replyTo;
+                const message = state.messages.find((entry) => entry.id === targetId);
+                const label = state.editingId ? "Editing" : "Replying to";
+                refs.replyStrip.classList.remove("hidden");
+                refs.replyStrip.innerHTML = `
+                    <div class="room-card-top">
+                        <strong>${escapeHtml(label)}</strong>
+                        <button class="btn btn-ghost" type="button" id="dismissReplyButton">Close</button>
+                    </div>
+                    <div class="reply-preview" style="margin-top: 8px;">
+                        ${message ? escapeHtml(message.sender) : "Missing message"}
+                    </div>
+                `;
+
+                const dismiss = document.getElementById("dismissReplyButton");
+                dismiss?.addEventListener("click", clearComposerModes, { once: true });
+            }
+
+            function renderSafetyCenter() {
+                const roomKeyLoaded = Boolean(state.roomSecrets[state.activeRoomId]);
+                const hasIdentity = Boolean(state.identity?.deviceId);
+                const connected = state.socketState === "online";
+                const showingBadges = Boolean(state.settings.verified);
+                const score = (
+                    (roomKeyLoaded ? 32 : 0) +
+                    (hasIdentity ? 26 : 0) +
+                    (connected ? 24 : 0) +
+                    (showingBadges ? 10 : 0) +
+                    (state.activeRoomId ? 8 : 0)
+                );
+
+                refs.safetyCenter.innerHTML = `
+                    <div class="safety-score">
+                        <div>
+                            <span class="section-kicker">score</span>
+                            <strong>${score}</strong>
+                        </div>
+                        <div class="muted">${roomKeyLoaded ? "room unlocked" : "room locked"}</div>
+                    </div>
+                    <div class="score-bar"><span style="width: ${Math.min(score, 100)}%;"></span></div>
+                    <div class="stat-row">
+                        <span class="stat-pill">${connected ? "relay online" : "relay offline"}</span>
+                        <span class="stat-pill">${hasIdentity ? "signed device" : "no identity"}</span>
+                        <span class="stat-pill">${showingBadges ? "verify on" : "verify off"}</span>
+                    </div>
+                    <p class="safety-copy" style="margin: 14px 0 0;">
+                        ${roomKeyLoaded
+                            ? "This room can encrypt and decrypt messages on this device."
+                            : "Load the room key to decrypt history and send new encrypted traffic."}
+                    </p>
+                `;
+            }
+
+            function renderMembers() {
+                if (!state.online.length) {
+                    refs.membersList.innerHTML = `<div class="empty-state">Nobody is online yet.</div>`;
+                    return;
+                }
+
+                const uniqueUsers = [...new Set(state.online)];
+                refs.membersList.innerHTML = uniqueUsers.map((name) => {
+                    const identity = state.identities[name] || {};
+                    const statusLine = [identity.status_emoji, identity.status_text].filter(Boolean).join(" ");
+                    return `
+                        <div class="member-card">
+                            <div class="member-card-top">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    ${renderAvatarMarkup(name, identity.avatar_emoji, true)}
+                                    <span class="member-name">${escapeHtml(name)}</span>
+                                </div>
+                                <span class="mini-pill">${name === state.user ? "you" : "live"}</span>
+                            </div>
+                            <div class="saved-sub" style="margin-top: 8px;">${escapeHtml(statusLine || "No status")}</div>
+                        </div>
+                    `;
+                }).join("");
+            }
+
+            async function renderSaved() {
+                const savedMessages = state.messages
+                    .filter((message) => state.saved.has(message.id))
+                    .sort((left, right) => right.created_at.localeCompare(left.created_at))
+                    .slice(0, 8);
+
+                if (!savedMessages.length) {
+                    refs.savedList.innerHTML = `<div class="empty-state">Save messages to build your vault.</div>`;
+                    return;
+                }
+
+                const prepared = await Promise.all(savedMessages.map(async (message) => ({
+                    message,
+                    details: await inspectMessage(message),
+                })));
+
+                refs.savedList.innerHTML = prepared.map(({ message, details }) => `
+                    <button class="saved-card" type="button" data-jump-message="${message.id}" data-jump-room="${message.room_id}">
+                        <div class="saved-title">${escapeHtml(message.sender)}</div>
+                        <div class="saved-sub" style="margin-top: 8px;">${escapeHtml(details.preview)}</div>
+                    </button>
+                `).join("");
+            }
+
+            function renderProtocol() {
+                if (!state.protocol.length) {
+                    refs.protocolList.innerHTML = `<div class="empty-state">No activity yet.</div>`;
+                    return;
+                }
+
+                refs.protocolList.innerHTML = state.protocol.map((entry) => `
+                    <div class="protocol-card">
+                        <strong>${escapeHtml(entry.message)}</strong>
+                        <span>${escapeHtml(entry.time)}</span>
+                    </div>
+                `).join("");
+            }
+
+            async function inspectMessage(message) {
+                const secret = state.roomSecrets[message.room_id] || "";
+                const cacheKey = `${message.id}|${message.edited_at || message.created_at}|${message.signature || ""}|${secret}`;
+                if (state.inspectCache.has(cacheKey)) {
+                    return state.inspectCache.get(cacheKey);
+                }
+
+                let text = "";
+                let locked = true;
+                let envelope = createTextEnvelope("");
+                if (secret) {
+                    try {
+                        text = await decryptMessage(message.room_id, secret, message.ciphertext, message.iv);
+                        locked = false;
+                        envelope = parseEnvelope(text);
+                    } catch {
+                        text = "";
+                        locked = true;
+                    }
+                }
+
+                let verified = false;
+                if (state.settings.verified && message.signature && state.identities[message.sender]?.public_key) {
+                    try {
+                        const publicKey = await importIdentityPublicKey(state.identities[message.sender]);
+                        if (publicKey) {
+                            verified = await verifyPayload(
+                                publicKey,
+                                buildSignaturePayload({
+                                    room_id: message.room_id,
+                                    ciphertext: message.ciphertext,
+                                    iv: message.iv,
+                                    reply_to: message.reply_to,
+                                    ttl_seconds: message.ttl_seconds,
+                                    device_id: message.device_id,
+                                }),
+                                message.signature
+                            );
+                        }
+                    } catch {
+                        verified = false;
+                    }
+                }
+
+                const result = {
+                    text,
+                    locked,
+                    verified,
+                    envelope,
+                    html: locked ? "" : renderEnvelopeHtml(envelope),
+                    searchText: locked ? "" : buildEnvelopeSearchText(envelope),
+                    preview: locked ? "Locked message" : buildEnvelopePreview(envelope),
+                };
+
+                state.inspectCache.set(cacheKey, result);
+                return result;
+            }
+
+            function importIdentityPublicKey(identity) {
+                if (!identity?.public_key) return null;
+                if (state.publicKeyCache.has(identity.public_key)) {
+                    return state.publicKeyCache.get(identity.public_key);
+                }
+
+                const promise = (async () => {
+                    const jwk = JSON.parse(identity.public_key);
+                    return crypto.subtle.importKey(
+                        "jwk",
+                        jwk,
+                        { name: "ECDSA", namedCurve: "P-256" },
+                        true,
+                        ["verify"]
+                    );
+                })();
+
+                state.publicKeyCache.set(identity.public_key, promise);
+                return promise;
+            }
+
+            function normalizeNickname(name) {
+                const value = String(name || "").trim().replace(/\s+/g, " ");
+                return USERNAME_RE.test(value) ? value : "";
+            }
+
+            function getCurrentRoom() {
+                return state.rooms.find((room) => room.id === state.activeRoomId) || null;
+            }
+
+            function setActiveRoom(roomId, options = {}) {
+                if (!roomId || roomId === state.activeRoomId) return;
+                stopTyping(false);
+                persistActiveDraft();
+                state.activeRoomId = roomId;
+                state.replyTo = null;
+                state.editingId = null;
+                state.unread[roomId] = 0;
+                localStorage.setItem(STORAGE.room, roomId);
+                bindDraftForActiveRoom();
+                void renderActiveRoom(Boolean(options.scrollBottom));
+            }
+
+            function bindDraftForActiveRoom() {
+                const draft = state.activeRoomId ? state.drafts[state.activeRoomId] || "" : "";
+                if (typeof draft === "string") {
+                    refs.composeInput.value = draft;
+                    state.composeMode = "text";
+                    state.composeLanguage = "";
+                } else {
+                    refs.composeInput.value = draft.text || "";
+                    state.composeMode = draft.mode || "text";
+                    state.composeLanguage = draft.language || "";
+                }
+                refs.codeLanguageInput.value = state.composeLanguage;
+                state.composeAttachments = [];
+                renderComposeModeControls();
+                renderComposerAttachments();
+            }
+
+            function startReply(messageId) {
+                state.replyTo = messageId;
+                state.editingId = null;
+                renderComposerState();
+                refs.composeInput.focus();
+            }
+
+            async function startEdit(messageId) {
+                const message = state.messages.find((entry) => entry.id === messageId);
+                if (!message) return;
+                const details = await inspectMessage(message);
+                if (details.locked) {
+                    toast("Unlock the room before editing this message.", "warning");
+                    return;
+                }
+
+                state.editingId = messageId;
+                state.replyTo = null;
+                refs.composeInput.value = details.envelope.text || "";
+                state.composeMode = details.envelope.mode || "text";
+                state.composeLanguage = details.envelope.code_language || "";
+                refs.codeLanguageInput.value = state.composeLanguage;
+                state.composeAttachments = cloneAttachments(details.envelope.attachments || []);
+                renderComposeModeControls();
+                renderComposerAttachments();
+                refs.composeInput.focus();
+                renderComposerState();
+            }
+
+            function clearComposerModes() {
+                state.replyTo = null;
+                state.editingId = null;
+                renderComposerState();
+            }
+
+            async function submitComposer() {
+                const room = getCurrentRoom();
+                const text = refs.composeInput.value.trim();
+                const secret = room ? state.roomSecrets[room.id] : "";
+                if (!room) {
+                    toast("No room selected.", "warning");
+                    return;
+                }
+                if (!secret) {
+                    toast("Load the room key first.", "warning");
+                    return;
+                }
+                if (!text && !state.composeAttachments.length) return;
+                if (!state.identity) {
+                    toast("Device identity is not ready.", "warning");
+                    return;
+                }
+
+                try {
+                    const envelope = buildComposerEnvelope(text);
+                    const encrypted = await encryptMessage(room.id, secret, JSON.stringify(envelope));
+                    if (state.editingId) {
+                        const original = state.messages.find((message) => message.id === state.editingId);
+                        if (!original) {
+                            toast("Original message is missing.", "warning");
+                            return;
+                        }
+
+                        const payload = {
+                            room_id: room.id,
+                            ciphertext: encrypted.ciphertext,
+                            iv: encrypted.iv,
+                            reply_to: original.reply_to,
+                            ttl_seconds: original.ttl_seconds,
+                            device_id: state.identity.deviceId,
+                        };
+                        const signature = await signPayload(buildSignaturePayload(payload));
+                        sendSocket("EDIT_MESSAGE", {
+                            message_id: state.editingId,
+                            ciphertext: encrypted.ciphertext,
+                            iv: encrypted.iv,
+                            signature,
+                            device_id: state.identity.deviceId,
+                        });
+                        logProtocol("Edit submitted.");
+                    } else {
+                        const payload = {
+                            room_id: room.id,
+                            ciphertext: encrypted.ciphertext,
+                            iv: encrypted.iv,
+                            reply_to: state.replyTo,
+                            ttl_seconds: Number(refs.ttlSelect.value || state.limits.default_ttl_seconds),
+                            device_id: state.identity.deviceId,
+                        };
+                        const signature = await signPayload(buildSignaturePayload(payload));
+                        sendSocket("SEND_MESSAGE", { ...payload, signature });
+                        logProtocol("Encrypted message submitted.");
+                    }
+
+                    stopTyping(false);
+                    refs.composeInput.value = "";
+                    state.composeAttachments = [];
+                    renderComposerAttachments();
+                    delete state.drafts[room.id];
+                    saveJson(STORAGE.drafts, state.drafts);
+                    clearComposerModes();
+                    refs.messageList.scrollTop = refs.messageList.scrollHeight;
+                } catch (error) {
+                    toast(error.message || "Unable to send message.", "error");
+                }
+            }
+
+            function toggleSaved(messageId) {
+                if (state.saved.has(messageId)) {
+                    state.saved.delete(messageId);
+                    toast("Removed from saved.");
+                } else {
+                    state.saved.add(messageId);
+                    toast("Saved to vault.");
+                }
+                saveJson(STORAGE.saved, [...state.saved]);
+                void renderActiveRoom();
+            }
+
+            function promptReaction(messageId, roomId) {
+                const emoji = window.prompt("Reaction emoji", "\uD83D\uDD25");
+                if (!emoji) return;
+                sendSocket("REACT", {
+                    room_id: roomId,
+                    message_id: messageId,
+                    emoji: emoji.trim().slice(0, 8),
+                });
+            }
+
+            function burnMessage(messageId) {
+                if (!window.confirm("Burn this message?")) return;
+                sendSocket("BURN_MESSAGE", { message_id: messageId });
+            }
+
+            function jumpToMessage(messageId, roomId) {
+                if (!messageId || !roomId) return;
+                state.highlightMessageId = messageId;
+                if (roomId !== state.activeRoomId) {
+                    setActiveRoom(roomId, { scrollBottom: false });
+                    return;
+                }
+                void renderMessages();
+            }
+
+            function upsertMessage(message) {
+                if (!message?.id) return;
+                const index = state.messages.findIndex((entry) => entry.id === message.id);
+                if (index >= 0) {
+                    state.messages[index] = message;
+                } else {
+                    state.messages.push(message);
+                }
+                state.inspectCache.clear();
+            }
+
+            function saveRoomSecret(roomId, secret, remember) {
+                state.roomSecrets[roomId] = secret;
+                if (remember) {
+                    state.persistedSecrets[roomId] = secret;
+                } else {
+                    delete state.persistedSecrets[roomId];
+                }
+                saveJson(STORAGE.roomSecrets, state.persistedSecrets);
+                refs.roomSecretInput.value = secret;
+                refs.roomRememberInput.checked = remember;
+            }
+
+            async function fetchJson(url, init) {
+                const response = await fetch(url, init);
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(payload.detail || "Request failed.");
+                }
+                return payload;
+            }
+
+            function createTextEnvelope(text) {
+                return {
+                    version: 1,
+                    kind: "senpixel.rich",
+                    mode: "text",
+                    text: String(text || ""),
+                    code_language: "",
+                    attachments: [],
+                };
+            }
+
+            function buildComposerEnvelope(text) {
+                return {
+                    version: 1,
+                    kind: "senpixel.rich",
+                    mode: state.composeMode || "text",
+                    text: String(text || ""),
+                    code_language: state.composeMode === "code" ? (state.composeLanguage || "txt") : "",
+                    attachments: cloneAttachments(state.composeAttachments),
+                };
+            }
+
+            function parseEnvelope(raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && parsed.kind === "senpixel.rich") {
+                        return {
+                            version: 1,
+                            kind: "senpixel.rich",
+                            mode: ["text", "markdown", "code"].includes(parsed.mode) ? parsed.mode : "text",
+                            text: String(parsed.text || ""),
+                            code_language: String(parsed.code_language || "").slice(0, 20),
+                            attachments: normalizeAttachments(parsed.attachments),
+                        };
+                    }
+                } catch {
+                    // Fall through to legacy text messages.
+                }
+                return createTextEnvelope(raw);
+            }
+
+            function normalizeAttachments(attachments) {
+                if (!Array.isArray(attachments)) return [];
+                return attachments
+                    .filter((item) => item && item.data_url && item.name && String(item.data_url).startsWith("data:"))
+                    .slice(0, MAX_ATTACHMENTS)
+                    .map((item) => ({
+                        id: String(item.id || crypto.randomUUID()),
+                        name: String(item.name || "attachment").slice(0, 80),
+                        mime: String(item.mime || "application/octet-stream").slice(0, 80),
+                        size: Number(item.size || 0),
+                        kind: item.kind === "image" && String(item.data_url).startsWith("data:image/") ? "image" : "file",
+                        data_url: String(item.data_url || ""),
+                    }));
+            }
+
+            function cloneAttachments(attachments) {
+                return normalizeAttachments(attachments).map((item) => ({ ...item }));
+            }
+
+            function buildEnvelopePreview(envelope) {
+                const parts = [];
+                const trimmedText = String(envelope.text || "").trim();
+                if (envelope.mode === "code") parts.push("Code");
+                if (trimmedText) parts.push(truncate(trimmedText.replace(/\s+/g, " "), 96));
+                if (envelope.attachments.length) {
+                    parts.push(`${envelope.attachments.length} attachment${envelope.attachments.length > 1 ? "s" : ""}`);
+                }
+                return parts.join(" / ") || "Rich message";
+            }
+
+            function buildEnvelopeSearchText(envelope) {
+                return [
+                    envelope.text || "",
+                    envelope.code_language || "",
+                    ...envelope.attachments.map((item) => item.name),
+                ].join(" ");
+            }
+
+            function renderEnvelopeHtml(envelope) {
+                const blocks = [];
+                const trimmedText = String(envelope.text || "");
+                if (trimmedText) {
+                    if (envelope.mode === "code") {
+                        blocks.push(`
+                            <div class="code-shell">
+                                <div class="code-head">
+                                    <span>snippet</span>
+                                    <span>${escapeHtml(envelope.code_language || "txt")}</span>
+                                </div>
+                                <pre><code>${escapeHtml(trimmedText)}</code></pre>
+                            </div>
+                        `);
+                    } else if (envelope.mode === "markdown") {
+                        blocks.push(`<div class="rich-html">${renderMarkdownHtml(trimmedText)}</div>`);
+                    } else {
+                        blocks.push(`<div class="rich-html"><p>${escapeHtml(trimmedText).replace(/\n/g, "<br>")}</p></div>`);
+                    }
+                }
+
+                if (envelope.attachments.length) {
+                    blocks.push(`
+                        <div class="attachment-grid">
+                            ${envelope.attachments.map((item) => renderAttachmentCard(item)).join("")}
+                        </div>
+                    `);
+                }
+
+                return blocks.join("");
+            }
+
+            function renderAttachmentCard(item) {
+                if (item.kind === "image") {
+                    return `
+                        <figure class="attachment-card">
+                            <img src="${escapeAttribute(item.data_url)}" alt="${escapeAttribute(item.name)}" loading="lazy">
+                            <figcaption class="attachment-meta">
+                                <strong>${escapeHtml(item.name)}</strong>
+                                <a href="${escapeAttribute(item.data_url)}" download="${escapeAttribute(item.name)}">Download</a>
+                            </figcaption>
+                        </figure>
+                    `;
+                }
+
+                return `
+                    <div class="attachment-card">
+                        <div class="attachment-meta">
+                            <strong>${escapeHtml(item.name)}</strong>
+                            <span>${escapeHtml(formatBytes(item.size))}</span>
+                            <a href="${escapeAttribute(item.data_url)}" download="${escapeAttribute(item.name)}">Download file</a>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderMarkdownHtml(text) {
+                const blocks = text.split(/\n{2,}/).filter(Boolean);
+                if (!blocks.length) {
+                    return `<p>${escapeHtml(text).replace(/\n/g, "<br>")}</p>`;
+                }
+
+                return blocks.map((block) => {
+                    const lines = block.split("\n");
+                    if (lines.every((line) => /^[-*]\s+/.test(line))) {
+                        return `<ul>${lines.map((line) => `<li>${renderInlineMarkdown(line.replace(/^[-*]\s+/, ""))}</li>`).join("")}</ul>`;
+                    }
+                    if (lines.every((line) => /^\d+\.\s+/.test(line))) {
+                        return `<ol>${lines.map((line) => `<li>${renderInlineMarkdown(line.replace(/^\d+\.\s+/, ""))}</li>`).join("")}</ol>`;
+                    }
+                    if (lines.every((line) => /^>\s?/.test(line))) {
+                        return `<blockquote>${lines.map((line) => renderInlineMarkdown(line.replace(/^>\s?/, ""))).join("<br>")}</blockquote>`;
+                    }
+                    return `<p>${renderInlineMarkdown(block).replace(/\n/g, "<br>")}</p>`;
+                }).join("");
+            }
+
+            function renderInlineMarkdown(text) {
+                let html = escapeHtml(text);
+                const placeholders = [];
+                const pushPlaceholder = (value) => {
+                    const token = `__SENPIXEL_${placeholders.length}__`;
+                    placeholders.push(value);
+                    return token;
+                };
+
+                html = html.replace(/`([^`]+)`/g, (_, value) => pushPlaceholder(`<code>${value}</code>`));
+                html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_, label, url) => {
+                    return pushPlaceholder(`<a href="${url}" target="_blank" rel="noreferrer">${label}</a>`);
+                });
+                html = html.replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g, (_, prefix, url) => {
+                    return `${prefix}${pushPlaceholder(`<a href="${url}" target="_blank" rel="noreferrer">${url}</a>`)}`;
+                });
+                html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+                html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+                html = html.replace(/__SENPIXEL_(\d+)__/g, (_, index) => placeholders[Number(index)] || "");
+                return html;
+            }
+
+            async function encryptMessage(roomId, secret, text) {
+                const key = await deriveRoomKey(roomId, secret);
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const ciphertext = await crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv },
+                    key,
+                    textEncoder.encode(text)
+                );
+                return {
+                    ciphertext: toBase64(ciphertext),
+                    iv: toBase64(iv.buffer),
+                };
+            }
+
+            async function decryptMessage(roomId, secret, ciphertext, iv) {
+                const key = await deriveRoomKey(roomId, secret);
+                const plaintext = await crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: new Uint8Array(fromBase64(iv)) },
+                    key,
+                    fromBase64(ciphertext)
+                );
+                return textDecoder.decode(plaintext);
+            }
+
+            async function deriveRoomKey(roomId, secret) {
+                const keyMaterial = await crypto.subtle.importKey(
+                    "raw",
+                    textEncoder.encode(secret),
+                    "PBKDF2",
+                    false,
+                    ["deriveKey"]
+                );
+                return crypto.subtle.deriveKey(
+                    {
+                        name: "PBKDF2",
+                        salt: textEncoder.encode(`senpixel:${roomId}`),
+                        iterations: 120000,
+                        hash: "SHA-256",
+                    },
+                    keyMaterial,
+                    { name: "AES-GCM", length: 256 },
+                    false,
+                    ["encrypt", "decrypt"]
+                );
+            }
+
+            async function signPayload(payload) {
+                const signature = await crypto.subtle.sign(
+                    { name: "ECDSA", hash: "SHA-256" },
+                    state.identity.privateKey,
+                    textEncoder.encode(payload)
+                );
+                return toBase64(signature);
+            }
+
+            async function verifyPayload(publicKey, payload, signature) {
+                return crypto.subtle.verify(
+                    { name: "ECDSA", hash: "SHA-256" },
+                    publicKey,
+                    fromBase64(signature),
+                    textEncoder.encode(payload)
+                );
+            }
+
+            function buildSignaturePayload({ room_id, ciphertext, iv, reply_to, ttl_seconds, device_id }) {
+                return JSON.stringify({
+                    room_id,
+                    ciphertext,
+                    iv,
+                    reply_to: reply_to || null,
+                    ttl_seconds: Number(ttl_seconds || 0),
+                    device_id,
+                });
+            }
+
+            function toBase64(buffer) {
+                const bytes = new Uint8Array(buffer);
+                let binary = "";
+                for (let index = 0; index < bytes.length; index += 1) {
+                    binary += String.fromCharCode(bytes[index]);
+                }
+                return btoa(binary);
+            }
+
+            function fromBase64(value) {
+                const binary = atob(value);
+                const bytes = new Uint8Array(binary.length);
+                for (let index = 0; index < binary.length; index += 1) {
+                    bytes[index] = binary.charCodeAt(index);
+                }
+                return bytes.buffer;
+            }
+
+            function formatClock(iso) {
+                const date = new Date(iso);
+                return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            }
+
+            function formatTtl(seconds) {
+                if (!seconds) return "no burn";
+                if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+                if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
+                return `${Math.round(seconds / 86400)}d`;
+            }
+
+            function getTypingText(roomId) {
+                if (!roomId || !state.typingByRoom[roomId]) return "";
+                const now = Date.now();
+                const names = Object.entries(state.typingByRoom[roomId])
+                    .filter(([name, expiresAt]) => name !== state.user && expiresAt > now)
+                    .map(([name]) => name);
+
+                if (!names.length) return "";
+                if (names.length === 1) return `${names[0]} is typing`;
+                if (names.length === 2) return `${names[0]} and ${names[1]} are typing`;
+                return `${names[0]} and ${names.length - 1} more are typing`;
+            }
+
+            function getRoomTitle(roomId) {
+                return state.rooms.find((room) => room.id === roomId)?.title || "room";
+            }
+
+            function renderAvatarMarkup(name, avatarEmoji, mini = false) {
+                const fallback = String(name || "?").slice(0, 1).toUpperCase();
+                const display = avatarEmoji || fallback;
+                return `<div class="avatar ${mini ? "avatar-mini" : ""}">${escapeHtml(display)}</div>`;
+            }
+
+            function escapeHtml(value) {
+                return String(value ?? "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            }
+
+            function escapeAttribute(value) {
+                return escapeHtml(value).replace(/`/g, "&#96;");
+            }
+
+            function truncate(value, length) {
+                const text = String(value || "");
+                return text.length > length ? `${text.slice(0, length - 1)}…` : text;
+            }
+
+            function shortFingerprint(value) {
+                return value ? value.slice(0, 10) : "unsigned";
+            }
+
+            function logProtocol(message) {
+                const entry = {
+                    message,
+                    time: state.settings.timestamps ? formatClock(new Date().toISOString()) : "now",
+                };
+                state.protocol.unshift(entry);
+                state.protocol = state.protocol.slice(0, 20);
+                saveJson(STORAGE.protocol, state.protocol);
+                renderProtocol();
+            }
+
+            function toast(message, tone = "info") {
+                const node = document.createElement("div");
+                node.className = `toast ${tone}`;
+                node.textContent = message;
+                refs.toastRack.appendChild(node);
+                setTimeout(() => {
+                    node.remove();
+                }, 3200);
+            }
+
+            function isTypingIntoField(target) {
+                return target instanceof HTMLElement &&
+                    (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+            }
+
+            function formatBytes(bytes) {
+                if (!bytes) return "0 B";
+                const units = ["B", "KB", "MB"];
+                let value = bytes;
+                let unitIndex = 0;
+                while (value >= 1024 && unitIndex < units.length - 1) {
+                    value /= 1024;
+                    unitIndex += 1;
+                }
+                return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+            }
+
+            async function playPulse() {
+                try {
+                    if (!state.audioContext) {
+                        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    const ctx = state.audioContext;
+                    const now = ctx.currentTime;
+                    const gain = ctx.createGain();
+                    const oscillator = ctx.createOscillator();
+                    oscillator.type = "sine";
+                    oscillator.frequency.value = 720;
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.exponentialRampToValueAtTime(0.03, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+                    oscillator.connect(gain).connect(ctx.destination);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.13);
+                } catch {
+                    // Audio is optional.
+                }
+            }
+        })();
+    </script>
+</body>
+</html>
